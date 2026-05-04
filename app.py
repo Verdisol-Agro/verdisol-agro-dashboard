@@ -1,6 +1,8 @@
+# app.py
 import os
-from datetime import datetime, timedelta, date
-from sqlalchemy import func
+from datetime import datetime, timedelta, date, timezone
+from calendar import monthrange
+from sqlalchemy import func, extract
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
@@ -8,24 +10,25 @@ from functools import wraps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'verdisol_agro_secret_key_2024'
-
-DATABASE_URL = os.getenv('DATABASE_URL')
-if not DATABASE_URL:
-    raise Exception("DATABASE_URL environment variable not set")
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///verdisol_agro.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
-# Models
+# -------------------------------
+# Database Models
+# -------------------------------
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(128), nullable=False)
+    
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+    
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
 
@@ -47,7 +50,7 @@ class Sale(db.Model):
     area_size = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), nullable=False, default='completed')
     invoice_no = db.Column(db.String(50), unique=True, nullable=True)
-
+    
 class Expenditure(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Float, nullable=False)
@@ -58,7 +61,7 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     message = db.Column(db.String(200), nullable=False)
     type = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     is_read = db.Column(db.Boolean, default=False)
 
 class FollowerData(db.Model):
@@ -68,78 +71,102 @@ class FollowerData(db.Model):
     month = db.Column(db.Integer, nullable=False)
     count = db.Column(db.Integer, nullable=False, default=0)
 
-# Demo data
+# -------------------------------
+# Helper Functions
+# -------------------------------
+
 def init_demo_data():
     if User.query.count() == 0:
         admin = User(username='admin', email='admin@verdisol.com')
         admin.set_password('admin123')
         db.session.add(admin)
         db.session.commit()
+    
     if SocialLink.query.count() == 0:
-        for platform, url, icon in [
+        platforms = [
             ('twitter', 'https://twitter.com/verdisolagro', 'fab fa-twitter'),
             ('linkedin', 'https://linkedin.com/company/verdisol-agro', 'fab fa-linkedin'),
             ('facebook', 'https://facebook.com/verdisolagro', 'fab fa-facebook'),
             ('instagram', 'https://instagram.com/verdisolagro', 'fab fa-instagram'),
             ('whatsapp', 'https://wa.me/263712345678', 'fab fa-whatsapp')
-        ]:
-            db.session.add(SocialLink(platform=platform, url=url, icon=icon))
+        ]
+        for platform, url, icon in platforms:
+            link = SocialLink(platform=platform, url=url, icon=icon)
+            db.session.add(link)
         db.session.commit()
+    
     if Sale.query.count() == 0:
         import random
-        start = date(2024,1,1)
-        end = date(2025,4,14)
-        delta = end - start
+        start_date = date(2024, 1, 1)
+        end_date = date(2025, 4, 14)
+        delta = end_date - start_date
         customers = ['John Doe', 'Jane Smith', 'Peter Green', 'Mary Johnson', 'David Brown', 'Susan White']
-        titles = ['Mr','Mrs','Miss','Ms']
-        services = ['Soil Testing','Crop Advisory','Irrigation Setup','Fertilizer Supply','Drone Survey']
-        area_types = ['residential','farm','plot']
+        titles = ['Mr', 'Mrs', 'Miss', 'Ms']
+        services = ['Soil Testing', 'Crop Advisory', 'Irrigation Setup', 'Fertilizer Supply', 'Drone Survey']
+        area_types = ['residential', 'farm', 'plot']
         for i in range(40):
-            d = start + timedelta(days=random.randint(0, delta.days))
-            amount = round(random.uniform(500,15000),2)
-            status = 'completed' if (rs:=random.choice(['sent','pending'])) == 'sent' else 'pending'
+            random_days = random.randint(0, delta.days)
+            sale_date = start_date + timedelta(days=random_days)
+            amount = round(random.uniform(500, 15000), 2)
+            report_status = random.choice(['sent', 'pending'])
+            status = 'completed' if report_status == 'sent' else 'pending'
+            customer = random.choice(customers)
+            title = random.choice(titles)
+            service = random.choice(services)
+            area_type = random.choice(area_types)
+            area_size = round(random.uniform(0.5, 50), 1)
+            invoice_no = f"INV-{sale_date.strftime('%Y%m%d')}-{i+100}"
             sale = Sale(
-                customer_title=random.choice(titles),
-                customer_name=random.choice(customers),
-                service=random.choice(services),
-                service_date=d,
-                report_status=rs,
-                amount=amount,
-                area_type=random.choice(area_types),
-                area_size=round(random.uniform(0.5,50),1),
-                status=status,
-                invoice_no=f"INV-{d.strftime('%Y%m%d')}-{i+100}"
+                customer_title=title, customer_name=customer, service=service,
+                service_date=sale_date, report_status=report_status, amount=amount,
+                area_type=area_type, area_size=area_size, status=status, invoice_no=invoice_no
             )
             db.session.add(sale)
         db.session.commit()
+    
     if Expenditure.query.count() == 0:
         import random
-        start = date(2024,1,1)
-        end = date(2025,4,14)
-        delta = end - start
-        expenses = ['Seeds','Fertilizers','Equipment','Labor','Transport','Marketing','Utilities','Irrigation']
+        start_date = date(2024, 1, 1)
+        end_date = date(2025, 4, 14)
+        delta = end_date - start_date
+        expenses = ['Seeds', 'Fertilizers', 'Equipment', 'Labor', 'Transport', 'Marketing', 'Utilities', 'Irrigation']
         for i in range(50):
-            d = start + timedelta(days=random.randint(0, delta.days))
-            db.session.add(Expenditure(amount=round(random.uniform(200,5000),2), date=d, description=random.choice(expenses)))
+            random_days = random.randint(0, delta.days)
+            exp_date = start_date + timedelta(days=random_days)
+            amount = round(random.uniform(200, 5000), 2)
+            desc = random.choice(expenses)
+            exp = Expenditure(amount=amount, date=exp_date, description=desc)
+            db.session.add(exp)
         db.session.commit()
+    
     if Notification.query.count() == 0:
-        for msg,typ in [("New sales lead from Harvest Corp - interested in organic fertilizers","lead"),
-                        ("Invoice INV-20240315-102 for $5,200 completed and sent to customer","invoice"),
-                        ("Completed sale: Green Farms Ltd - order #AGRO-4521 invoiced","sale")]:
-            db.session.add(Notification(message=msg, type=typ, created_at=datetime.utcnow() - timedelta(days=random.randint(1,15))))
+        notifications = [
+            ("New sales lead from Harvest Corp - interested in organic fertilizers", "lead"),
+            ("Invoice INV-20240315-102 for $5,200 completed and sent to customer", "invoice"),
+            ("Completed sale: Green Farms Ltd - order #AGRO-4521 invoiced", "sale"),
+        ]
+        for msg, ntype in notifications:
+            notif = Notification(message=msg, type=ntype, created_at=datetime.now(timezone.utc) - timedelta(days=random.randint(1,15)))
+            db.session.add(notif)
         db.session.commit()
+    
     if FollowerData.query.count() == 0:
         import random
-        platforms = ['twitter','linkedin','facebook','instagram','whatsapp']
-        cur_year = datetime.now().year
-        for year in [cur_year-1, cur_year]:
+        platforms = ['twitter', 'linkedin', 'facebook', 'instagram', 'whatsapp']
+        current_year = datetime.now().year
+        for year in [current_year-1, current_year]:
             for platform in platforms:
-                base = random.randint(500,5000)
-                for month in range(1,13):
-                    count = base + random.randint(-200,300)
+                base = random.randint(500, 5000)
+                for month in range(1, 13):
+                    count = base + random.randint(-200, 300)
                     if count < 0: count = 0
-                    db.session.add(FollowerData(platform=platform, year=year, month=month, count=count))
+                    fd = FollowerData(platform=platform, year=year, month=month, count=count)
+                    db.session.add(fd)
         db.session.commit()
+
+# -------------------------------
+# Authentication Decorator
+# -------------------------------
 
 def login_required(f):
     @wraps(f)
@@ -149,12 +176,15 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# -------------------------------
 # Routes
+# -------------------------------
+
 @app.route('/')
 def home():
     return redirect(url_for('login'))
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         identifier = request.form['identifier']
@@ -176,14 +206,19 @@ def logout():
 def dashboard():
     return render_template('dashboard.html')
 
-# API endpoints (keep all from your original file)
-@app.route('/api/social_links', methods=['GET','POST'])
+# -------------------------------
+# API Endpoints
+# -------------------------------
+
+@app.route('/api/social_links', methods=['GET', 'POST'])
 @login_required
 def handle_social_links():
     if request.method == 'GET':
-        return jsonify([{'platform': l.platform, 'url': l.url, 'icon': l.icon} for l in SocialLink.query.all()])
+        links = SocialLink.query.all()
+        return jsonify([{'platform': l.platform, 'url': l.url, 'icon': l.icon} for l in links])
     else:
-        for item in request.json:
+        data = request.json
+        for item in data:
             link = SocialLink.query.filter_by(platform=item['platform']).first()
             if link:
                 link.url = item['url']
@@ -195,10 +230,17 @@ def handle_social_links():
 def get_all_sales():
     sales = Sale.query.order_by(Sale.service_date.desc()).all()
     return jsonify([{
-        'id': s.id, 'customer_title': s.customer_title, 'customer_name': s.customer_name,
-        'service': s.service, 'service_date': s.service_date.isoformat(),
-        'report_status': s.report_status, 'amount': s.amount, 'area_type': s.area_type,
-        'area_size': s.area_size, 'status': s.status, 'invoice_no': s.invoice_no
+        'id': s.id,
+        'customer_title': s.customer_title,
+        'customer_name': s.customer_name,
+        'service': s.service,
+        'service_date': s.service_date.isoformat(),
+        'report_status': s.report_status,
+        'amount': s.amount,
+        'area_type': s.area_type,
+        'area_size': s.area_size,
+        'status': s.status,
+        'invoice_no': s.invoice_no
     } for s in sales])
 
 @app.route('/api/sales', methods=['POST'])
@@ -209,15 +251,21 @@ def add_sale():
     invoice_no = f"INV-{datetime.now().strftime('%Y%m%d')}-{last_id+1}"
     status = 'completed' if data['report_status'] == 'sent' else 'pending'
     sale = Sale(
-        customer_title=data['customer_title'], customer_name=data['customer_name'],
-        service=data['service'], service_date=datetime.strptime(data['service_date'], '%Y-%m-%d').date(),
-        report_status=data['report_status'], amount=float(data['amount']),
-        area_type=data['area_type'], area_size=float(data['area_size']),
-        status=status, invoice_no=invoice_no
+        customer_title=data['customer_title'],
+        customer_name=data['customer_name'],
+        service=data['service'],
+        service_date=datetime.strptime(data['service_date'], '%Y-%m-%d').date(),
+        report_status=data['report_status'],
+        amount=float(data['amount']),
+        area_type=data['area_type'],
+        area_size=float(data['area_size']),
+        status=status,
+        invoice_no=invoice_no
     )
     db.session.add(sale)
     db.session.commit()
-    db.session.add(Notification(message=f"New sale added: {sale.customer_title} {sale.customer_name} - {sale.service}", type='sale'))
+    notif = Notification(message=f"New sale added: {sale.customer_title} {sale.customer_name} - {sale.service}", type='sale')
+    db.session.add(notif)
     db.session.commit()
     return jsonify({'success': True, 'id': sale.id})
 
@@ -255,72 +303,78 @@ def sales_trend():
     if status != 'all':
         query = query.filter_by(status=status)
     sales = query.all()
+    
     if period == 'weekly':
         from collections import defaultdict
-        weekly = defaultdict(float)
-        for s in sales:
-            week = s.service_date.isocalendar()[1]
-            key = f"{s.service_date.year}-W{week:02d}"
-            weekly[key] += s.amount
-        sorted_items = sorted(weekly.items())
-        labels = [i[0] for i in sorted_items][-12:]
-        values = [i[1] for i in sorted_items][-12:]
+        weekly_data = defaultdict(float)
+        for sale in sales:
+            week_num = sale.service_date.isocalendar()[1]
+            year = sale.service_date.year
+            key = f"{year}-W{week_num:02d}"
+            weekly_data[key] += sale.amount
+        sorted_items = sorted(weekly_data.items(), key=lambda x: x[0])
+        labels = [item[0] for item in sorted_items][-12:]
+        values = [item[1] for item in sorted_items][-12:]
     elif period == 'monthly':
-        monthly = {}
-        for s in sales:
-            key = s.service_date.strftime('%Y-%m')
-            monthly[key] = monthly.get(key,0) + s.amount
-        sorted_items = sorted(monthly.items())
-        labels = [i[0] for i in sorted_items][-12:]
-        values = [i[1] for i in sorted_items][-12:]
+        monthly_data = {}
+        for sale in sales:
+            key = sale.service_date.strftime('%Y-%m')
+            monthly_data[key] = monthly_data.get(key, 0) + sale.amount
+        sorted_items = sorted(monthly_data.items())
+        labels = [item[0] for item in sorted_items][-12:]
+        values = [item[1] for item in sorted_items][-12:]
     else:
-        quarterly = {}
-        for s in sales:
-            q = (s.service_date.month-1)//3+1
-            key = f"{s.service_date.year}-Q{q}"
-            quarterly[key] = quarterly.get(key,0) + s.amount
-        sorted_items = sorted(quarterly.items())
-        labels = [i[0] for i in sorted_items][-8:]
-        values = [i[1] for i in sorted_items][-8:]
+        quarterly_data = {}
+        for sale in sales:
+            quarter = (sale.service_date.month - 1) // 3 + 1
+            key = f"{sale.service_date.year}-Q{quarter}"
+            quarterly_data[key] = quarterly_data.get(key, 0) + sale.amount
+        sorted_items = sorted(quarterly_data.items())
+        labels = [item[0] for item in sorted_items][-8:]
+        values = [item[1] for item in sorted_items][-8:]
     return jsonify({'labels': labels, 'values': values})
 
 @app.route('/api/pending_vs_completed')
 @login_required
 def pending_vs_completed():
-    pending = db.session.query(func.sum(Sale.amount)).filter_by(status='pending').scalar() or 0
-    completed = db.session.query(func.sum(Sale.amount)).filter_by(status='completed').scalar() or 0
-    return jsonify({'pending': pending, 'completed': completed})
+    pending_total = db.session.query(func.sum(Sale.amount)).filter_by(status='pending').scalar() or 0
+    completed_total = db.session.query(func.sum(Sale.amount)).filter_by(status='completed').scalar() or 0
+    return jsonify({'pending': pending_total, 'completed': completed_total})
 
 @app.route('/api/income_expenditure')
 @login_required
 def income_expenditure():
     period = request.args.get('period', 'monthly')
     sales = Sale.query.filter_by(status='completed').all()
-    exps = Expenditure.query.all()
+    expenditures = Expenditure.query.all()
     if period == 'monthly':
-        inc = {}
-        for s in sales:
-            k = s.service_date.strftime('%Y-%m')
-            inc[k] = inc.get(k,0) + s.amount
-        exp = {}
-        for e in exps:
-            k = e.date.strftime('%Y-%m')
-            exp[k] = exp.get(k,0) + e.amount
-        dates = sorted(set(inc.keys()) | set(exp.keys()))[-12:]
-        return jsonify({'labels': dates, 'income': [inc.get(d,0) for d in dates], 'expenditure': [exp.get(d,0) for d in dates]})
+        income_data = {}
+        for sale in sales:
+            key = sale.service_date.strftime('%Y-%m')
+            income_data[key] = income_data.get(key, 0) + sale.amount
+        expense_data = {}
+        for exp in expenditures:
+            key = exp.date.strftime('%Y-%m')
+            expense_data[key] = expense_data.get(key, 0) + exp.amount
+        all_dates = sorted(set(list(income_data.keys()) + list(expense_data.keys())))[-12:]
+        income_values = [income_data.get(d, 0) for d in all_dates]
+        expense_values = [expense_data.get(d, 0) for d in all_dates]
+        return jsonify({'labels': all_dates, 'income': income_values, 'expenditure': expense_values})
     else:
-        inc = {}
-        for s in sales:
-            q = (s.service_date.month-1)//3+1
-            k = f"{s.service_date.year}-Q{q}"
-            inc[k] = inc.get(k,0) + s.amount
-        exp = {}
-        for e in exps:
-            q = (e.date.month-1)//3+1
-            k = f"{e.date.year}-Q{q}"
-            exp[k] = exp.get(k,0) + e.amount
-        dates = sorted(set(inc.keys()) | set(exp.keys()))[-8:]
-        return jsonify({'labels': dates, 'income': [inc.get(d,0) for d in dates], 'expenditure': [exp.get(d,0) for d in dates]})
+        income_quarter = {}
+        for sale in sales:
+            quarter = (sale.service_date.month - 1) // 3 + 1
+            key = f"{sale.service_date.year}-Q{quarter}"
+            income_quarter[key] = income_quarter.get(key, 0) + sale.amount
+        expense_quarter = {}
+        for exp in expenditures:
+            quarter = (exp.date.month - 1) // 3 + 1
+            key = f"{exp.date.year}-Q{quarter}"
+            expense_quarter[key] = expense_quarter.get(key, 0) + exp.amount
+        all_quarters = sorted(set(list(income_quarter.keys()) + list(expense_quarter.keys())))[-8:]
+        income_values = [income_quarter.get(q, 0) for q in all_quarters]
+        expense_values = [expense_quarter.get(q, 0) for q in all_quarters]
+        return jsonify({'labels': all_quarters, 'income': income_values, 'expenditure': expense_values})
 
 @app.route('/api/notifications')
 @login_required
@@ -334,37 +388,42 @@ def get_notifications():
 @app.route('/api/notifications/mark_read', methods=['POST'])
 @login_required
 def mark_notification_read():
-    n = Notification.query.get(request.json.get('id'))
-    if n:
-        n.is_read = True
+    data = request.json
+    notif = Notification.query.get(data.get('id'))
+    if notif:
+        notif.is_read = True
         db.session.commit()
     return jsonify({'success': True})
 
 @app.route('/api/add_lead_notification', methods=['POST'])
 @login_required
 def add_lead_notification():
-    customer = request.json.get('customer', 'New Customer')
-    db.session.add(Notification(message=f"New sales lead from {customer} - interested in Verdisol products", type='lead'))
+    data = request.json
+    customer = data.get('customer', 'New Customer')
+    message = f"New sales lead from {customer} - interested in Verdisol products"
+    notif = Notification(message=message, type='lead')
+    db.session.add(notif)
     db.session.commit()
     return jsonify({'success': True})
 
 @app.route('/api/sales_summary')
 @login_required
 def sales_summary():
-    total = db.session.query(func.sum(Sale.amount)).scalar() or 0
-    pending = db.session.query(func.sum(Sale.amount)).filter_by(status='pending').scalar() or 0
-    completed = db.session.query(func.sum(Sale.amount)).filter_by(status='completed').scalar() or 0
-    return jsonify({'total_sales': total, 'pending_sales': pending, 'completed_sales': completed})
+    total_sales = db.session.query(func.sum(Sale.amount)).scalar() or 0
+    pending_total = db.session.query(func.sum(Sale.amount)).filter_by(status='pending').scalar() or 0
+    completed_total = db.session.query(func.sum(Sale.amount)).filter_by(status='completed').scalar() or 0
+    return jsonify({'total_sales': total_sales, 'pending_sales': pending_total, 'completed_sales': completed_total})
 
 @app.route('/api/sales_histogram')
 @login_required
 def sales_histogram():
-    amounts = [s.amount for s in Sale.query.all()]
-    bins = [0,2000,4000,6000,8000,float('inf')]
-    labels = ['$0-2k','$2k-4k','$4k-6k','$6k-8k','$8k+']
+    sales = Sale.query.all()
+    amounts = [s.amount for s in sales]
+    bins = [0, 2000, 4000, 6000, 8000, float('inf')]
+    labels = ['$0-2k', '$2k-4k', '$4k-6k', '$6k-8k', '$8k+']
     counts = [0]*len(labels)
     for amt in amounts:
-        for i,(low,high) in enumerate(zip(bins[:-1], bins[1:])):
+        for i, (low, high) in enumerate(zip(bins[:-1], bins[1:])):
             if low <= amt < high:
                 counts[i] += 1
                 break
@@ -373,30 +432,55 @@ def sales_histogram():
 @app.route('/api/today_sales')
 @login_required
 def today_sales():
-    total = db.session.query(func.sum(Sale.amount)).filter(Sale.service_date == date.today()).scalar() or 0
-    return jsonify({'total': total, 'date': date.today().isoformat()})
+    today = date.today()
+    total = db.session.query(func.sum(Sale.amount)).filter(Sale.service_date == today).scalar() or 0
+    return jsonify({'total': total, 'date': today.isoformat()})
 
 @app.route('/api/followers', methods=['GET'])
 @login_required
 def get_followers():
-    return jsonify([{'id': d.id, 'platform': d.platform, 'year': d.year, 'month': d.month, 'count': d.count} for d in FollowerData.query.all()])
+    data = FollowerData.query.all()
+    return jsonify([{
+        'id': d.id,
+        'platform': d.platform,
+        'year': d.year,
+        'month': d.month,
+        'count': d.count
+    } for d in data])
 
 @app.route('/api/followers', methods=['POST'])
 @login_required
 def update_followers():
-    for item in request.json:
-        existing = FollowerData.query.filter_by(platform=item['platform'], year=item['year'], month=item['month']).first()
+    data = request.json
+    for item in data:
+        existing = FollowerData.query.filter_by(
+            platform=item['platform'],
+            year=item['year'],
+            month=item['month']
+        ).first()
         if existing:
             existing.count = item['count']
         else:
-            db.session.add(FollowerData(platform=item['platform'], year=item['year'], month=item['month'], count=item['count']))
+            new_entry = FollowerData(
+                platform=item['platform'],
+                year=item['year'],
+                month=item['month'],
+                count=item['count']
+            )
+            db.session.add(new_entry)
     db.session.commit()
     return jsonify({'success': True})
 
-# Create tables and init data
+# -------------------------------
+# Create tables and run app
+# -------------------------------
+
 with app.app_context():
     db.create_all()
     init_demo_data()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+
+# For Vercel serverless
+app = app
