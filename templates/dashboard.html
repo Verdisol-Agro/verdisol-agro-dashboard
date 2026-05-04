@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdisol Agro - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Arial', 'Inter', sans-serif; }
+        body {
+            font-size: 0.9rem;
+            background-image: url('https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+        }
+        h1 { font-size: 1.5rem !important; }
+        h2 { font-size: 1.2rem !important; }
+        h3 { font-size: 1rem !important; }
+        .sidebar-open { transform: translateX(0); }
+        .notification-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        
+        .chart-card, .table-container, #accountsView .bg-white, .chart-card {
+            background: rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(6px);
+            border-radius: 1rem;
+        }
+        /* Greyish transparent card for social handles */
+        .social-card {
+            background: rgba(80, 80, 80, 0.2) !important;
+            backdrop-filter: blur(6px);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .social-card p, .social-card label, .social-card .text-gray-500 {
+            color: white !important;
+        }
+        .social-card .bg-gray-50 {
+            background: rgba(255,255,255,0.2);
+        }
+        .sales-table, .follower-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid black;
+        }
+        .sales-table th, .sales-table td,
+        .follower-table th, .follower-table td {
+            border: 1px solid black;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            color: black;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .sales-table thead th, .follower-table thead th {
+            background: rgba(26, 77, 58, 0.7);
+            color: white;
+            border: 1px solid black;
+        }
+        .sales-table tbody tr:hover, .follower-table tbody tr:hover {
+            background: rgba(0,0,0,0.05);
+        }
+        
+        .active-nav { background: linear-gradient(135deg, #1a4d3a, #1e5a44); color: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .nav-item:active { transform: scale(0.98); }
+        .period-btn.active, .finance-period-btn.active { background-color: #1e5a44 !important; color: white !important; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #1e5a44; border-radius: 10px; }
+        .bg-brand-green { background-color: #1a4d3a; }
+        .text-brand-green { color: #1a4d3a; }
+        .btn-primary { background: linear-gradient(135deg, #1a4d3a, #2d6a4f); }
+        .btn-primary:hover { background: linear-gradient(135deg, #143d2e, #1e5a44); }
+        .brown-shadow { color: #8B5A2B; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); font-weight: 700; }
+        canvas { max-height: 300px; width: 100% !important; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; border-radius: 1rem; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; padding: 1.5rem; }
+        .footer {
+            margin-top: auto;
+            background-color: #1a4d3a;
+            color: white;
+            text-align: center;
+            padding: 1.5rem 1rem;
+            border-top: 3px solid #8B5A2B;
+        }
+        .footer .logo-text { display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1.25rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .footer .copyright { font-size: 0.8rem; opacity: 0.8; margin-top: 0.25rem; }
+        .footer .tagline { font-size: 0.75rem; opacity: 0.7; letter-spacing: 0.5px; }
+        .live-clock, .live-today-sales { background: rgba(255,255,255,0.15); padding: 0.25rem 0.75rem; border-radius: 2rem; font-size: 0.85rem; font-weight: 500; }
+        
+        #sidebar {
+            background: rgba(255, 255, 255, 0.6) !important;
+            backdrop-filter: blur(8px);
+            color: black;
+        }
+        #sidebar .nav-item {
+            color: black;
+            font-family: Arial, sans-serif;
+            font-weight: 500;
+        }
+        #sidebar .nav-item i { color: black; }
+        #sidebar .nav-item:hover { background: rgba(0, 0, 0, 0.1); }
+        #sidebar .active-nav { background: linear-gradient(135deg, #1a4d3a, #1e5a44); color: white; }
+        #sidebar .active-nav i { color: white; }
+        #sidebar .border-b { border-color: rgba(0,0,0,0.2); }
+        #sidebar .bg-gradient-to-r { background: rgba(255, 255, 255, 0.8); }
+        #sidebar h2, #sidebar p { color: black; }
+        #sidebar .brown-shadow { color: #8B5A2B; text-shadow: none; }
+        #sidebar hr { border-color: rgba(0,0,0,0.2); }
+        #sidebar a { color: black; }
+        #sidebar a:hover { background: rgba(0,0,0,0.1); }
+        
+        .export-btn {
+            background: rgba(26, 77, 58, 0.8);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            transition: 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .export-btn:hover {
+            background: #1a4d3a;
+            transform: translateY(-1px);
+        }
+        
+        .company-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+        }
+        .dept-subtitle {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+            font-size: 12px;
+            font-style: italic;
+            opacity: 0.9;
+        }
+        
+        .view-content:not(.hidden) h1,
+        .view-content:not(.hidden) .text-gray-600,
+        .view-content:not(.hidden) .text-gray-500 {
+            color: white !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .view-content:not(.hidden) .chart-card h3,
+        .view-content:not(.hidden) .chart-card .text-gray-700,
+        .view-content:not(.hidden) .sales-table td,
+        .view-content:not(.hidden) .sales-table th,
+        .view-content:not(.hidden) .follower-table td,
+        .view-content:not(.hidden) .follower-table th {
+            color: black !important;
+            text-shadow: none;
+        }
+        .view-content:not(.hidden) .bg-gradient-to-br h1,
+        .view-content:not(.hidden) .bg-gradient-to-br p {
+            color: white !important;
+        }
+        .follower-input {
+            width: 90px;
+            background: rgba(255,255,255,0.6);
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 4px 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .follower-input:focus {
+            outline: none;
+            background: white;
+            border-color: #1a4d3a;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden transition-opacity duration-300"></div>
+    
+    <!-- Sidebar Drawer -->
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-80 shadow-2xl z-40 transform -translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="p-5 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-[#1a4d3a] to-[#2d6a4f] rounded-xl flex items-center justify-center shadow-md">
+                    <i class="fas fa-leaf text-white text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-extrabold text-gray-800 tracking-tight">🌱 Verdisol Agro</h2>
+                    <p class="text-xs brown-shadow">Farming Redefined</p>
+                </div>
+            </div>
+        </div>
+        <nav class="p-4 space-y-2">
+            <div class="nav-item" data-view="records"><i class="fas fa-database w-6"></i><span>Sales Records</span></div>
+            <div class="nav-item" data-view="analytics"><i class="fas fa-chart-line w-6"></i><span>Sales Analytics</span></div>
+            <div class="nav-item" data-view="pending"><i class="fas fa-hourglass-half w-6"></i><span>Pending Sales</span></div>
+            <div class="nav-item" data-view="completed"><i class="fas fa-check-circle w-6"></i><span>Completed Sales</span></div>
+            <div class="nav-item" data-view="income"><i class="fas fa-chart-pie w-6"></i><span>Income & Expenditure</span></div>
+            <div class="nav-item" data-view="accounts"><i class="fas fa-hashtag w-6"></i><span>Social Accounts</span></div>
+            <hr class="my-4">
+            <a href="/logout" class="flex items-center space-x-3 p-3 rounded-lg transition"><i class="fas fa-sign-out-alt w-6"></i><span>Logout</span></a>
+        </nav>
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50 text-center text-xs text-gray-400">© 2025 Verdisol Agro</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="ml-0 transition-all duration-300 flex flex-col min-h-screen">
+        <header class="sticky top-0 z-20" style="background-color: #1a4d3a; border-bottom: 3px solid #8B5A2B;">
+            <div class="px-4 py-4 flex justify-between items-center flex-wrap gap-3">
+                <button id="menuBtn" class="text-white hover:text-green-200 focus:outline-none p-2 rounded-lg hover:bg-white/10">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+                <div class="text-center flex-1">
+                    <div class="company-title text-white">VERDISOL AGRO Pvt LTD</div>
+                    <div class="dept-subtitle text-white">Sales and Marketing Department</div>
+                </div>
+                <div class="flex items-center space-x-5">
+                    <div class="live-clock text-white hidden sm:flex items-center text-base"><i class="far fa-clock mr-2"></i><span id="liveClock">--:--:--</span></div>
+                    <div class="live-today-sales text-white flex items-center text-base"><i class="fas fa-today mr-2"></i><span id="todaySalesValue">$0</span></div>
+                    <div class="relative">
+                        <button id="notificationBtn" class="relative text-white hover:text-green-200 p-2 rounded-lg hover:bg-white/10">
+                            <i class="fas fa-bell text-2xl"></i>
+                            <span id="notificationCount" class="notification-badge absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                            <div class="p-4 border-b border-gray-100 font-bold text-gray-700 flex justify-between"><span><i class="fas fa-bell mr-2 text-green-600"></i>Notifications</span><span class="text-xs text-gray-400">Real-time</span></div>
+                            <div id="notificationList" class="max-h-96 overflow-y-auto divide-y divide-gray-100"></div>
+                            <div class="p-3 border-t border-gray-100 text-center bg-gray-50"><button id="addLeadBtn" class="text-sm text-green-600 hover:text-green-700"><i class="fas fa-plus-circle mr-1"></i> Add Test Lead</button></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2 bg-white/20 rounded-full px-3 py-1 backdrop-blur-sm">
+                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center"><span class="text-[#1a4d3a] text-sm font-bold">VA</span></div>
+                        <span class="text-sm font-semibold text-white">Admin</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="p-6 md:p-8 flex-grow">
+            <!-- Sales Records View -->
+            <div id="recordsView" class="view-content">
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+                    <h1 class="text-2xl font-extrabold">📋 Sales Records</h1>
+                    <div class="flex gap-2">
+                        <button id="exportCSVBtn" class="export-btn"><i class="fas fa-file-csv mr-1"></i> CSV</button>
+                        <button id="exportExcelBtn" class="export-btn"><i class="fas fa-file-excel mr-1"></i> Excel</button>
+                        <button id="exportPDFBtn" class="export-btn"><i class="fas fa-file-pdf mr-1"></i> PDF</button>
+                        <button id="addRecordBtn" class="bg-[#1a4d3a] text-white px-4 py-1 rounded-lg text-sm shadow hover:bg-[#143d2e] transition">
+                            <i class="fas fa-plus mr-1"></i>Add New
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container overflow-hidden">
+                    <table class="sales-table">
+                        <thead><tr><th>Customer</th><th>Service</th><th>Date</th><th>Report Status</th><th>Amount</th><th>Area Type</th><th>Area Size</th><th>Actions</th></tr></thead>
+                        <tbody id="salesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sales Analytics View -->
+            <div id="analyticsView" class="view-content hidden">
+                <div class="mb-4"><h1 class="text-2xl font-extrabold">📈 Advanced Sales Analytics</h1><p class="text-gray-600 text-sm">Line, bar, pie & histogram charts</p></div>
+                <div class="flex flex-wrap gap-3 mb-5">
+                    <button class="period-btn active bg-green-600 text-white px-4 py-2 rounded-xl text-sm" data-period="weekly">Weekly</button>
+                    <button class="period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-period="monthly">Monthly</button>
+                    <button class="period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-period="quarterly">Quarterly</button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📉 Sales Trend (Line)</h3><canvas id="lineChart" height="200"></canvas></div>
+                    <div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📊 Monthly Comparison (Bar)</h3><canvas id="barChart" height="200"></canvas></div>
+                    <div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">🥧 Pending vs Completed (Pie)</h3><canvas id="pieChart" height="200"></canvas></div>
+                    <div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📊 Sales Amount Distribution (Histogram)</h3><canvas id="histogramChart" height="200"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow"><i class="fas fa-chart-simple text-2xl mb-2"></i><p class="text-xs opacity-90">Total Sales</p><p id="totalSalesAmount" class="text-2xl font-bold">$0</p></div>
+                    <div class="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-5 text-white shadow"><i class="fas fa-hourglass-half text-2xl mb-2"></i><p class="text-xs opacity-90">Pending Sales</p><p id="pendingSalesAmount" class="text-2xl font-bold">$0</p></div>
+                    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white shadow"><i class="fas fa-check-circle text-2xl mb-2"></i><p class="text-xs opacity-90">Completed Sales</p><p id="completedSalesAmount" class="text-2xl font-bold">$0</p></div>
+                </div>
+            </div>
+
+            <div id="pendingView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">⏳ Pending Sales Analysis</h1><div class="grid lg:grid-cols-2 gap-5"><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Pending vs Completed</h3><canvas id="pendingPieChart" height="250"></canvas></div><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Pending Sales Trend</h3><canvas id="pendingTrendChart" height="250"></canvas></div></div></div>
+
+            <div id="completedView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">✅ Completed Sales Insights</h1><div class="grid lg:grid-cols-2 gap-5"><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Sales Distribution</h3><canvas id="completedPieChart" height="250"></canvas></div><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Completed Sales Trend</h3><canvas id="completedTrendChart" height="250"></canvas></div></div></div>
+
+            <div id="incomeView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">💰 Financial Overview</h1><div class="flex gap-3 mb-4"><button class="finance-period-btn active bg-purple-600 text-white px-4 py-2 rounded-xl text-sm" data-finance="monthly">Monthly</button><button class="finance-period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-finance="quarterly">Quarterly</button></div><div class="chart-card p-5 shadow"><canvas id="incomeExpenseChart" height="100"></canvas></div></div>
+
+            <!-- Social Accounts View with greyish transparent card -->
+            <div id="accountsView" class="view-content hidden">
+                <h1 class="text-xl font-extrabold mb-4">🔗 Social Media Handles</h1>
+                <div class="social-card">
+                    <p class="text-gray-500 text-sm mb-4">Manage your brand's social presence</p>
+                    <form id="socialForm" class="space-y-3"><div id="socialFields"></div><button type="submit" class="bg-[#1a4d3a] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#143d2e]"><i class="fas fa-save mr-1"></i>Save Changes</button></form>
+                </div>
+                
+                <!-- Follower Analytics Dashboard -->
+                <div class="mt-8">
+                    <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+                        <h2 class="text-xl font-extrabold text-white drop-shadow-md">📊 Follower Analytics (Monthly)</h2>
+                        <div class="flex gap-2">
+                            <select id="followerYearSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm"></select>
+                            <button id="saveFollowersBtn" class="export-btn"><i class="fas fa-save mr-1"></i> Save Changes</button>
+                        </div>
+                    </div>
+                    <div class="table-container overflow-x-auto">
+                        <table class="follower-table" id="followerTable">
+                            <thead id="followerTableHead"></thead>
+                            <tbody id="followerTableBody"></tbody>
+                        </table>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Click on any number to edit, then click "Save Changes".</p>
+                </div>
+
+                <!-- Follower Trend Chart -->
+                <div class="mt-8">
+                    <h2 class="text-xl font-extrabold text-white drop-shadow-md mb-3">📈 Follower Growth Trend</h2>
+                    <div class="flex flex-wrap gap-3 items-end mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-white">Platform</label>
+                            <select id="chartPlatformSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm">
+                                <option value="twitter">Twitter</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="instagram">Instagram</option>
+                                <option value="whatsapp">WhatsApp</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-white">Year</label>
+                            <select id="chartYearSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm"></select>
+                        </div>
+                        <button id="showTrendBtn" class="export-btn"><i class="fas fa-chart-line mr-1"></i> Show Trend</button>
+                    </div>
+                    <div class="chart-card p-4 shadow-md">
+                        <canvas id="followerTrendChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="logo-text"><i class="fas fa-leaf text-white text-xl"></i><span>🌱 Verdisol Agro</span></div>
+            <div class="copyright">verdisol@2026</div>
+            <div class="tagline">Farming Redefined</div>
+        </footer>
+    </div>
+
+    <!-- Modal for Add/Edit Sale -->
+    <div id="saleModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 id="modalTitle" class="text-lg font-bold">Add New Sale</h2><button id="closeModal" class="text-gray-500 hover:text-gray-700">&times;</button></div><form id="saleForm"><input type="hidden" id="saleId"><div class="grid grid-cols-2 gap-3 text-sm"><div><label>Title</label><select id="customer_title" class="w-full border rounded p-1"><option>Mr</option><option>Mrs</option><option>Miss</option><option>Ms</option></select></div><div><label>Customer Name</label><input type="text" id="customer_name" required class="w-full border rounded p-1"></div><div><label>Service</label><input type="text" id="service" required class="w-full border rounded p-1"></div><div><label>Service Date</label><input type="date" id="service_date" required class="w-full border rounded p-1"></div><div><label>Report Status</label><select id="report_status" class="w-full border rounded p-1"><option value="pending">Pending</option><option value="sent">Sent</option></select></div><div><label>Amount ($)</label><input type="number" step="0.01" id="amount" required class="w-full border rounded p-1"></div><div><label>Area Type</label><select id="area_type" class="w-full border rounded p-1"><option value="residential">Residential</option><option value="farm">Farm</option><option value="plot">Plot</option></select></div><div><label>Area Size (acres/ha)</label><input type="number" step="0.1" id="area_size" required class="w-full border rounded p-1"></div></div><div class="flex justify-end space-x-2 mt-4"><button type="button" id="cancelModal" class="px-4 py-1 border rounded">Cancel</button><button type="submit" class="px-4 py-1 bg-[#1a4d3a] text-white rounded">Save</button></div></form></div></div>
+
+    <script>
+        // All JavaScript unchanged from previous version (already includes chart and table logic)
+        let lineChart, barChart, pieChart, histogramChart;
+        let pendingPieChart, pendingTrendChart, completedPieChart, completedTrendChart, incomeExpenseChart;
+        let followerTrendChart;
+        let currentPeriod = 'weekly', currentFinancePeriod = 'monthly';
+        let allSales = [];
+        let followerData = [];
+        let currentFollowerYear = new Date().getFullYear();
+
+        function updateClock() { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString(); }
+        setInterval(updateClock, 1000); updateClock();
+
+        async function updateTodaySales() {
+            const res = await fetch('/api/today_sales');
+            const data = await res.json();
+            const elem = document.getElementById('todaySalesValue');
+            const newVal = `$${data.total.toLocaleString()}`;
+            if (elem.innerText !== newVal) { elem.style.transform = 'scale(1.1)'; setTimeout(() => elem.style.transform = '', 200); elem.innerText = newVal; }
+        }
+        updateTodaySales(); setInterval(updateTodaySales, 10000);
+
+        const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('sidebarOverlay'), menuBtn = document.getElementById('menuBtn');
+        function openSidebar() { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+        function closeSidebar() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        menuBtn.addEventListener('click', openSidebar); overlay.addEventListener('click', closeSidebar);
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const view = item.dataset.view;
+                document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+                document.getElementById(`${view}View`).classList.remove('hidden');
+                closeSidebar();
+                if (view === 'analytics') loadAnalytics(currentPeriod);
+                else if (view === 'pending') loadPendingData();
+                else if (view === 'completed') loadCompletedData();
+                else if (view === 'income') loadIncomeExpenseData(currentFinancePeriod);
+                else if (view === 'records') loadSalesTable();
+                else if (view === 'accounts') { loadSocialLinks(); loadFollowerTable(currentFollowerYear); populateYearSelectors(); }
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active-nav'));
+                item.classList.add('active-nav');
+            });
+        });
+
+        // Helper for chart axis styling (white text & grid)
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { labels: { color: 'white', font: { weight: 'bold' } } },
+                tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } }
+            },
+            scales: {
+                x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } },
+                y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }
+            }
+        };
+
+        // Line chart specific (white line)
+        const lineChartOptions = {
+            ...chartOptions,
+            elements: { line: { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 2 }, point: { backgroundColor: 'white', borderColor: 'white' } }
+        };
+
+        // Bar chart specific (white bars)
+        const barChartOptions = {
+            ...chartOptions,
+            elements: { bar: { backgroundColor: 'rgba(255,255,255,0.7)', borderColor: 'white', borderWidth: 1 } }
+        };
+
+        async function loadAnalytics(period) {
+            const trendRes = await fetch(`/api/sales_trend?period=${period}&status=all`);
+            const trendData = await trendRes.json();
+            if (lineChart) lineChart.destroy();
+            lineChart = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: { labels: trendData.labels, datasets: [{ label: 'Sales ($)', data: trendData.values, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true, tension: 0.3 }] },
+                options: lineChartOptions
+            });
+            if (barChart) barChart.destroy();
+            barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: { labels: trendData.labels, datasets: [{ label: 'Sales ($)', data: trendData.values, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 6 }] },
+                options: barChartOptions
+            });
+            const pvRes = await fetch('/api/pending_vs_completed');
+            const pvData = await pvRes.json();
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(document.getElementById('pieChart'), {
+                type: 'pie',
+                data: { labels: ['Pending', 'Completed'], datasets: [{ data: [pvData.pending, pvData.completed], backgroundColor: ['#f59e0b', '#10b981'] }] },
+                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } }
+            });
+            const histRes = await fetch('/api/sales_histogram');
+            const histData = await histRes.json();
+            if (histogramChart) histogramChart.destroy();
+            histogramChart = new Chart(document.getElementById('histogramChart'), {
+                type: 'bar',
+                data: { labels: histData.labels, datasets: [{ label: 'Number of Sales', data: histData.counts, backgroundColor: 'rgba(255,255,255,0.7)' }] },
+                options: {
+                    ...barChartOptions,
+                    scales: { y: { beginAtZero: true, stepSize: 1, ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } } }
+                }
+            });
+            const summaryRes = await fetch('/api/sales_summary');
+            const summary = await summaryRes.json();
+            document.getElementById('totalSalesAmount').innerText = `$${summary.total_sales.toLocaleString()}`;
+            document.getElementById('pendingSalesAmount').innerText = `$${summary.pending_sales.toLocaleString()}`;
+            document.getElementById('completedSalesAmount').innerText = `$${summary.completed_sales.toLocaleString()}`;
+        }
+
+        async function loadPendingData() {
+            const res = await fetch('/api/pending_vs_completed'); const data = await res.json();
+            if (pendingPieChart) pendingPieChart.destroy();
+            pendingPieChart = new Chart(document.getElementById('pendingPieChart'), {
+                type: 'pie', data: { labels: ['Pending','Completed'], datasets: [{ data: [data.pending,data.completed], backgroundColor: ['#f59e0b','#10b981'] }] },
+                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } }
+            });
+            const trend = await fetch('/api/sales_trend?period=monthly&status=pending'); const trendData = await trend.json();
+            if (pendingTrendChart) pendingTrendChart.destroy();
+            pendingTrendChart = new Chart(document.getElementById('pendingTrendChart'), {
+                type: 'bar', data: { labels: trendData.labels, datasets: [{ label: 'Pending ($)', data: trendData.values, backgroundColor: 'rgba(255,255,255,0.7)' }] },
+                options: barChartOptions
+            });
+        }
+
+        async function loadCompletedData() {
+            const res = await fetch('/api/pending_vs_completed'); const data = await res.json();
+            if (completedPieChart) completedPieChart.destroy();
+            completedPieChart = new Chart(document.getElementById('completedPieChart'), {
+                type: 'doughnut', data: { labels: ['Completed','Pending'], datasets: [{ data: [data.completed,data.pending], backgroundColor: ['#10b981','#f59e0b'] }] },
+                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } }
+            });
+            const trend = await fetch('/api/sales_trend?period=monthly&status=completed'); const trendData = await trend.json();
+            if (completedTrendChart) completedTrendChart.destroy();
+            completedTrendChart = new Chart(document.getElementById('completedTrendChart'), {
+                type: 'line', data: { labels: trendData.labels, datasets: [{ label: 'Completed ($)', data: trendData.values, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true }] },
+                options: lineChartOptions
+            });
+        }
+
+        async function loadIncomeExpenseData(period) {
+            const res = await fetch(`/api/income_expenditure?period=${period}`); const data = await res.json();
+            if (incomeExpenseChart) incomeExpenseChart.destroy();
+            incomeExpenseChart = new Chart(document.getElementById('incomeExpenseChart'), {
+                type: 'bar', data: { labels: data.labels, datasets: [{ label: 'Income ($)', data: data.income, backgroundColor: 'rgba(255,255,255,0.7)' }, { label: 'Expenditure ($)', data: data.expenditure, backgroundColor: 'rgba(255,255,255,0.3)' }] },
+                options: barChartOptions
+            });
+        }
+
+        // Sales Table CRUD (unchanged)
+        async function loadSalesTable() {
+            const res = await fetch('/api/sales'); allSales = await res.json();
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = allSales.map(s => `
+                <tr>
+                    <td class="px-4 py-2">${s.customer_title} ${s.customer_name}</td>
+                    <td class="px-4 py-2">${s.service}</td>
+                    <td class="px-4 py-2">${s.service_date}</td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs ${s.report_status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${s.report_status}</span></td>
+                    <td class="px-4 py-2">$${s.amount.toLocaleString()}</td>
+                    <td class="px-4 py-2">${s.area_type}</td>
+                    <td class="px-4 py-2">${s.area_size}</td>
+                    <td class="px-4 py-2"><button class="edit-btn text-blue-600 mr-2" data-id="${s.id}"><i class="fas fa-edit"></i></button><button class="delete-btn text-red-600" data-id="${s.id}"><i class="fas fa-trash"></i></button></td>
+                 `
+            ).join('');
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); editSale(btn.dataset.id); }));
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { e.stopPropagation(); if(confirm('Delete this sale?')) { await fetch(`/api/sales/${btn.dataset.id}`, {method:'DELETE'}); loadSalesTable(); refreshAllCharts(); } }));
+        }
+        function editSale(id) { const sale = allSales.find(s => s.id == id); if(sale) { document.getElementById('modalTitle').innerText='Edit Sale'; document.getElementById('saleId').value=sale.id; document.getElementById('customer_title').value=sale.customer_title; document.getElementById('customer_name').value=sale.customer_name; document.getElementById('service').value=sale.service; document.getElementById('service_date').value=sale.service_date; document.getElementById('report_status').value=sale.report_status; document.getElementById('amount').value=sale.amount; document.getElementById('area_type').value=sale.area_type; document.getElementById('area_size').value=sale.area_size; document.getElementById('saleModal').style.display='flex'; } }
+        document.getElementById('addRecordBtn').addEventListener('click', () => { document.getElementById('modalTitle').innerText='Add New Sale'; document.getElementById('saleForm').reset(); document.getElementById('saleId').value=''; document.getElementById('saleModal').style.display='flex'; });
+        document.getElementById('closeModal').addEventListener('click', () => document.getElementById('saleModal').style.display='none');
+        document.getElementById('cancelModal').addEventListener('click', () => document.getElementById('saleModal').style.display='none');
+        document.getElementById('saleForm').addEventListener('submit', async (e) => { e.preventDefault(); const id = document.getElementById('saleId').value; const payload = { customer_title: document.getElementById('customer_title').value, customer_name: document.getElementById('customer_name').value, service: document.getElementById('service').value, service_date: document.getElementById('service_date').value, report_status: document.getElementById('report_status').value, amount: parseFloat(document.getElementById('amount').value), area_type: document.getElementById('area_type').value, area_size: parseFloat(document.getElementById('area_size').value) }; if(id) await fetch(`/api/sales/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); else await fetch('/api/sales', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)}); document.getElementById('saleModal').style.display='none'; loadSalesTable(); refreshAllCharts(); });
+        function refreshAllCharts() { loadAnalytics(currentPeriod); loadPendingData(); loadCompletedData(); loadIncomeExpenseData(currentFinancePeriod); }
+
+        async function loadSocialLinks() { const res = await fetch('/api/social_links'); const links = await res.json(); const container = document.getElementById('socialFields'); container.innerHTML = links.map(l => `<div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg"><i class="${l.icon} text-xl w-6"></i><input type="url" class="flex-1 p-1 border rounded" value="${l.url}" data-platform="${l.platform}"></div>`).join(''); }
+        document.getElementById('socialForm').addEventListener('submit', async (e) => { e.preventDefault(); const inputs = document.querySelectorAll('#socialFields input'); const updates = Array.from(inputs).map(i => ({ platform: i.dataset.platform, url: i.value })); await fetch('/api/social_links', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updates) }); alert('Social links updated!'); });
+
+        async function loadFollowerData() {
+            const res = await fetch('/api/followers');
+            followerData = await res.json();
+        }
+        function populateYearSelectors() {
+            const currentYear = new Date().getFullYear();
+            const yearSelect = document.getElementById('followerYearSelect');
+            const chartYearSelect = document.getElementById('chartYearSelect');
+            yearSelect.innerHTML = '';
+            chartYearSelect.innerHTML = '';
+            for (let y = 2020; y <= 2090; y++) {
+                const option1 = document.createElement('option');
+                option1.value = y;
+                option1.textContent = y;
+                if (y === currentYear) option1.selected = true;
+                yearSelect.appendChild(option1);
+                const option2 = document.createElement('option');
+                option2.value = y;
+                option2.textContent = y;
+                if (y === currentYear) option2.selected = true;
+                chartYearSelect.appendChild(option2);
+            }
+        }
+        async function loadFollowerTable(year) {
+            await loadFollowerData();
+            const platforms = ['twitter', 'linkedin', 'facebook', 'instagram', 'whatsapp'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const thead = document.getElementById('followerTableHead');
+            thead.innerHTML = `<tr><th>Platform</th>${months.map(m => `<th>${m}</th>`).join('')}</tr>`;
+            const tbody = document.getElementById('followerTableBody');
+            tbody.innerHTML = '';
+            for (let platform of platforms) {
+                let row = `<tr><td class="font-bold">${platform.charAt(0).toUpperCase() + platform.slice(1)}</td>`;
+                for (let i = 1; i <= 12; i++) {
+                    const record = followerData.find(f => f.platform === platform && f.year === year && f.month === i);
+                    const count = record ? record.count : 0;
+                    row += `<td><input type="number" class="follower-input" data-platform="${platform}" data-month="${i}" value="${count}"></td>`;
+                }
+                row += `</tr>`;
+                tbody.innerHTML += row;
+            }
+            currentFollowerYear = year;
+        }
+        async function loadFollowerTrendChart(platform, year) {
+            await loadFollowerData();
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthlyCounts = [];
+            for (let i = 1; i <= 12; i++) {
+                const record = followerData.find(f => f.platform === platform && f.year === year && f.month === i);
+                monthlyCounts.push(record ? record.count : 0);
+            }
+            if (followerTrendChart) followerTrendChart.destroy();
+            const ctx = document.getElementById('followerTrendChart').getContext('2d');
+            followerTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: `${platform.charAt(0).toUpperCase() + platform.slice(1)} Followers (${year})`,
+                        data: monthlyCounts,
+                        borderColor: 'white',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: 'white',
+                        pointBorderColor: 'white',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toLocaleString()} followers` } } },
+                    scales: { x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' }, beginAtZero: true, title: { display: true, text: 'Followers', color: 'white' } } }
+                }
+            });
+        }
+        document.getElementById('followerYearSelect').addEventListener('change', (e) => { loadFollowerTable(parseInt(e.target.value)); });
+        document.getElementById('saveFollowersBtn').addEventListener('click', async () => {
+            const inputs = document.querySelectorAll('#followerTableBody .follower-input');
+            const updates = [];
+            inputs.forEach(inp => {
+                const platform = inp.dataset.platform;
+                const month = parseInt(inp.dataset.month);
+                const count = parseInt(inp.value) || 0;
+                updates.push({ platform, year: currentFollowerYear, month, count });
+            });
+            const res = await fetch('/api/followers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
+            if (res.ok) alert('Follower data saved successfully!'); else alert('Error saving data');
+            loadFollowerTable(currentFollowerYear);
+        });
+        document.getElementById('showTrendBtn').addEventListener('click', () => {
+            const platform = document.getElementById('chartPlatformSelect').value;
+            const year = parseInt(document.getElementById('chartYearSelect').value);
+            loadFollowerTrendChart(platform, year);
+        });
+
+        async function loadNotifications() { const res = await fetch('/api/notifications'); const notifs = await res.json(); document.getElementById('notificationCount').innerText = notifs.filter(n => !n.is_read).length; const container = document.getElementById('notificationList'); container.innerHTML = notifs.map(n => `<div class="p-3 hover:bg-gray-50 cursor-pointer ${!n.is_read ? 'bg-green-50 border-l-4 border-green-500' : ''}" data-id="${n.id}"><p class="text-sm">${n.message}</p><p class="text-xs text-gray-400">${n.created_at}</p></div>`).join(''); document.querySelectorAll('#notificationList > div').forEach(el => el.addEventListener('click', async () => { await fetch('/api/notifications/mark_read', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ id: el.dataset.id }) }); loadNotifications(); })); }
+        document.getElementById('notificationBtn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notificationDropdown').classList.toggle('hidden'); loadNotifications(); });
+        document.getElementById('addLeadBtn').addEventListener('click', async () => { const cust = prompt('Lead customer name:'); if(cust) await fetch('/api/add_lead_notification', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ customer: cust }) }); loadNotifications(); });
+        document.addEventListener('click', (e) => { if (!document.getElementById('notificationBtn').contains(e.target) && !document.getElementById('notificationDropdown').contains(e.target)) document.getElementById('notificationDropdown').classList.add('hidden'); if (e.target === overlay) closeSidebar(); });
+
+        function getTableData() { return allSales.map(s => ({ "Customer": `${s.customer_title} ${s.customer_name}`, "Service": s.service, "Date": s.service_date, "Report Status": s.report_status, "Amount ($)": s.amount, "Area Type": s.area_type, "Area Size": s.area_size })); }
+        document.getElementById('exportCSVBtn').addEventListener('click', () => { const data = getTableData(); const headers = Object.keys(data[0]); const csvRows = [headers.join(',')]; for (const row of data) { const values = headers.map(header => `"${row[header]}"`); csvRows.push(values.join(',')); } const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `verdisol_sales_${new Date().toISOString().slice(0,19)}.csv`; a.click(); URL.revokeObjectURL(url); });
+        document.getElementById('exportExcelBtn').addEventListener('click', () => { const data = getTableData(); const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "SalesRecords"); XLSX.writeFile(wb, `verdisol_sales_${new Date().toISOString().slice(0,19)}.xlsx`); });
+        document.getElementById('exportPDFBtn').addEventListener('click', async () => { const { jsPDF } = window.jspdf; const doc = new jsPDF({ orientation: 'landscape' }); const data = getTableData(); const tableColumn = ["Customer", "Service", "Date", "Report Status", "Amount ($)", "Area Type", "Area Size"]; const tableRows = data.map(item => [item["Customer"], item["Service"], item["Date"], item["Report Status"], item["Amount ($)"], item["Area Type"], item["Area Size"]]); doc.autoTable({ head: [tableColumn], body: tableRows, theme: 'striped', headStyles: { fillColor: [26, 77, 58] }, margin: { top: 20 } }); doc.text("Verdisol Agro - Sales Records", 14, 15); doc.save(`verdisol_sales_${new Date().toISOString().slice(0,19)}.pdf`); });
+
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.add('flex','items-center','space-x-3','p-3','rounded-xl','cursor-pointer','hover:bg-green-50','transition','font-medium'));
+        document.querySelector('.nav-item[data-view="records"]').classList.add('active-nav');
+        loadSalesTable();
+        loadAnalytics('weekly');
+        loadPendingData();
+        loadCompletedData();
+        loadIncomeExpenseData('monthly');
+        loadNotifications();
+        populateYearSelectors();
+        loadFollowerTable(new Date().getFullYear());
+        loadFollowerTrendChart('twitter', new Date().getFullYear());
+        setInterval(() => { if (!document.getElementById('notificationDropdown').classList.contains('hidden')) loadNotifications(); }, 30000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdisol Agro - Login | Farming Redefined</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body {
+            background-image: url('https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.2) 100%);
+            z-index: 0;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .input-field {
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .input-field:focus {
+            border-color: #15803d;
+            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.1);
+            outline: none;
+            background: white;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #166534 0%, #15803d 100%);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(21, 128, 61, 0.4);
+        }
+        .brand-container {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(4px);
+            border-radius: 2rem;
+            padding: 1rem 2rem;
+            display: inline-block;
+            width: auto;
+            margin: 0 auto;
+            box-shadow: 0 8px 20px -6px rgba(0,0,0,0.2);
+        }
+        .company-name {
+            color: #15803d;
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .farming-tagline {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+            font-size: 12px;
+            font-style: italic;
+            color: #8B5A2B;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+        }
+        .circle-bg {
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .logo-img {
+            width: 60px;
+            height: auto;
+            max-height: 60px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative">
+    <div class="relative z-10 w-full max-w-md">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 circle-bg rounded-full mb-4">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Verdisol Agro Logo" class="logo-img">
+            </div>
+            <div class="brand-container">
+                <h1 class="company-name">VERDISOL AGRO (PVT) LIMITED</h1>
+                <p class="farming-tagline mt-1">Farming Redefined</p>
+            </div>
+        </div>
+
+        <div class="glass-card p-8 md:p-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+            <p class="text-gray-600 text-sm mb-6">Sign in to your dashboard</p>
+
+            {% if error %}
+                <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-lg flex items-center">
+                    <i class="fas fa-exclamation-circle mr-3"></i>
+                    <span>{{ error }}</span>
+                </div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="mb-5">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2" for="identifier">
+                        <i class="fas fa-envelope mr-1"></i> Email or Username
+                    </label>
+                    <input type="text" id="identifier" name="identifier" required
+                           class="input-field w-full px-4 py-3 rounded-xl bg-white/80 focus:bg-white"
+                           placeholder="admin@verdisol.com or admin">
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2" for="password">
+                        <i class="fas fa-lock mr-1"></i> Password
+                    </label>
+                    <input type="password" id="password" name="password" required
+                           class="input-field w-full px-4 py-3 rounded-xl bg-white/80 focus:bg-white"
+                           placeholder="••••••••">
+                </div>
+
+                <div class="flex items-center justify-between mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <span class="ml-2 text-sm text-gray-700">Remember me</span>
+                    </label>
+                    <a href="#" class="text-sm text-green-800 hover:text-green-900 font-medium">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-primary w-full text-white font-bold py-3 rounded-xl transition">
+                    <i class="fas fa-arrow-right-to-bracket mr-2"></i> Sign In
+                </button>
+
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-4 bg-transparent text-gray-600">OR</span>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <p class="text-sm text-gray-700">
+                        Demo credentials: <strong class="text-green-800">admin</strong> / <strong class="text-green-800">admin123</strong>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <p class="text-center text-white/80 text-xs mt-8">
+            © 2025 Verdisol Agro. Sustainable farming solutions.
+        </p>
+    </div>
+</body>
+</html>
