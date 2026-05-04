@@ -34,7 +34,6 @@
             backdrop-filter: blur(6px);
             border-radius: 1rem;
         }
-        /* Greyish transparent card for social handles */
         .social-card {
             background: rgba(80, 80, 80, 0.2) !important;
             backdrop-filter: blur(6px);
@@ -181,7 +180,7 @@
             border-color: #1a4d3a;
         }
 
-        /* FORCE ALL EDITABLE ELEMENTS TO BE CLICKABLE AND EDITABLE */
+        /* Force all editable elements to be clickable */
         #followerYearSelect, .follower-input, #socialFields input,
         #socialFields select, #socialFields button, .export-btn,
         #addRecordBtn, .edit-btn, .delete-btn {
@@ -306,13 +305,45 @@
                 </div>
             </div>
 
+            <!-- Pending Sales View -->
             <div id="pendingView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">⏳ Pending Sales Analysis</h1><div class="grid lg:grid-cols-2 gap-5"><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Pending vs Completed</h3><canvas id="pendingPieChart" height="250"></canvas></div><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Pending Sales Trend</h3><canvas id="pendingTrendChart" height="250"></canvas></div></div></div>
 
-            <div id="completedView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">✅ Completed Sales Insights</h1><div class="grid lg:grid-cols-2 gap-5"><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Sales Distribution</h3><canvas id="completedPieChart" height="250"></canvas></div><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Completed Sales Trend</h3><canvas id="completedTrendChart" height="250"></canvas></div></div></div>
+            <!-- Completed Sales View with Year & Month Filter -->
+            <div id="completedView" class="view-content hidden">
+                <h1 class="text-xl font-extrabold mb-4">✅ Completed Sales Insights</h1>
+                <!-- Year & Month Selectors -->
+                <div class="flex gap-4 mb-6 bg-white/20 p-4 rounded-xl">
+                    <div>
+                        <label class="block text-white text-sm font-medium">Year</label>
+                        <select id="completedYearSelect" class="bg-white border rounded px-3 py-1"></select>
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-medium">Month</label>
+                        <select id="completedMonthSelect" class="bg-white border rounded px-3 py-1">
+                            <option value="1">January</option><option value="2">February</option>
+                            <option value="3">March</option><option value="4">April</option>
+                            <option value="5">May</option><option value="6">June</option>
+                            <option value="7">July</option><option value="8">August</option>
+                            <option value="9">September</option><option value="10">October</option>
+                            <option value="11">November</option><option value="12">December</option>
+                        </select>
+                    </div>
+                    <button id="loadCompletedSalesBtn" class="bg-green-700 text-white px-4 py-1 rounded mt-5">Load</button>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-5">
+                    <div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Sales Distribution</h3><canvas id="completedPieChart" height="250"></canvas></div>
+                    <div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Completed Sales Trend</h3><canvas id="completedTrendChart" height="250"></canvas></div>
+                </div>
+                <div class="mt-6 bg-white/20 p-4 rounded-xl text-white">
+                    <h3 class="font-bold">Monthly Summary</h3>
+                    <p id="completedMonthSummary">Select a year and month, then click Load.</p>
+                </div>
+            </div>
 
+            <!-- Income & Expenditure View -->
             <div id="incomeView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">💰 Financial Overview</h1><div class="flex gap-3 mb-4"><button class="finance-period-btn active bg-purple-600 text-white px-4 py-2 rounded-xl text-sm" data-finance="monthly">Monthly</button><button class="finance-period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-finance="quarterly">Quarterly</button></div><div class="chart-card p-5 shadow"><canvas id="incomeExpenseChart" height="100"></canvas></div></div>
 
-            <!-- Social Accounts View with greyish transparent card -->
+            <!-- Social Accounts View -->
             <div id="accountsView" class="view-content hidden">
                 <h1 class="text-xl font-extrabold mb-4">🔗 Social Media Handles</h1>
                 <div class="social-card">
@@ -376,7 +407,7 @@
     <div id="saleModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 id="modalTitle" class="text-lg font-bold">Add New Sale</h2><button id="closeModal" class="text-gray-500 hover:text-gray-700">&times;</button></div><form id="saleForm"><input type="hidden" id="saleId"><div class="grid grid-cols-2 gap-3 text-sm"><div><label>Title</label><select id="customer_title" class="w-full border rounded p-1"><option>Mr</option><option>Mrs</option><option>Miss</option><option>Ms</option></select></div><div><label>Customer Name</label><input type="text" id="customer_name" required class="w-full border rounded p-1"></div><div><label>Service</label><input type="text" id="service" required class="w-full border rounded p-1"></div><div><label>Service Date</label><input type="date" id="service_date" required class="w-full border rounded p-1"></div><div><label>Report Status</label><select id="report_status" class="w-full border rounded p-1"><option value="pending">Pending</option><option value="sent">Sent</option></select></div><div><label>Amount ($)</label><input type="number" step="0.01" id="amount" required class="w-full border rounded p-1"></div><div><label>Area Type</label><select id="area_type" class="w-full border rounded p-1"><option value="residential">Residential</option><option value="farm">Farm</option><option value="plot">Plot</option></select></div><div><label>Area Size (acres/ha)</label><input type="number" step="0.1" id="area_size" required class="w-full border rounded p-1"></div></div><div class="flex justify-end space-x-2 mt-4"><button type="button" id="cancelModal" class="px-4 py-1 border rounded">Cancel</button><button type="submit" class="px-4 py-1 bg-[#1a4d3a] text-white rounded">Save</button></div></form></div></div>
 
     <script>
-        // All JavaScript unchanged from previous version (includes chart and table logic)
+        // All JavaScript (same as before, plus the added completed sales year/month loader)
         let lineChart, barChart, pieChart, histogramChart;
         let pendingPieChart, pendingTrendChart, completedPieChart, completedTrendChart, incomeExpenseChart;
         let followerTrendChart;
@@ -410,7 +441,7 @@
                 closeSidebar();
                 if (view === 'analytics') loadAnalytics(currentPeriod);
                 else if (view === 'pending') loadPendingData();
-                else if (view === 'completed') loadCompletedData();
+                else if (view === 'completed') { loadCompletedData(); /* also load initial completed summary? already in loadCompletedData */ }
                 else if (view === 'income') loadIncomeExpenseData(currentFinancePeriod);
                 else if (view === 'records') loadSalesTable();
                 else if (view === 'accounts') { loadSocialLinks(); loadFollowerTable(currentFollowerYear); populateYearSelectors(); }
@@ -419,7 +450,6 @@
             });
         });
 
-        // Helper for chart axis styling (white text & grid)
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: true,
@@ -433,13 +463,11 @@
             }
         };
 
-        // Line chart specific (white line)
         const lineChartOptions = {
             ...chartOptions,
             elements: { line: { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 2 }, point: { backgroundColor: 'white', borderColor: 'white' } }
         };
 
-        // Bar chart specific (white bars)
         const barChartOptions = {
             ...chartOptions,
             elements: { bar: { backgroundColor: 'rgba(255,255,255,0.7)', borderColor: 'white', borderWidth: 1 } }
@@ -525,7 +553,6 @@
             });
         }
 
-        // Sales Table CRUD (unchanged)
         async function loadSalesTable() {
             const res = await fetch('/api/sales'); allSales = await res.json();
             const tbody = document.getElementById('salesTableBody');
@@ -673,100 +700,51 @@
         loadFollowerTrendChart('twitter', new Date().getFullYear());
         setInterval(() => { if (!document.getElementById('notificationDropdown').classList.contains('hidden')) loadNotifications(); }, 30000);
 
-        // ----- ADDITIONAL FIXES: Make everything editable and database-sync -----
-        function forceEditable() {
-            // Remove any disabled attribute on follower inputs
-            document.querySelectorAll('.follower-input').forEach(inp => {
-                inp.disabled = false;
-                inp.style.pointerEvents = 'auto';
-                inp.style.backgroundColor = 'white';
-            });
-            // Social fields inputs
-            document.querySelectorAll('#socialFields input').forEach(inp => {
-                inp.disabled = false;
-                inp.style.pointerEvents = 'auto';
-            });
-            // Year selector
-            const yrSel = document.getElementById('followerYearSelect');
-            if (yrSel) {
-                yrSel.disabled = false;
-                yrSel.style.pointerEvents = 'auto';
-            }
-            // Save buttons
-            const saveBtn = document.getElementById('saveFollowersBtn');
-            if (saveBtn) saveBtn.disabled = false;
+        // === NEW: Completed Sales Year/Month Selector ===
+        // Populate year dropdown for completed sales
+        const completedYearSelect = document.getElementById('completedYearSelect');
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+            let option = document.createElement('option');
+            option.value = y;
+            option.textContent = y;
+            if (y === currentYear) option.selected = true;
+            completedYearSelect.appendChild(option);
         }
+        document.getElementById('loadCompletedSalesBtn').addEventListener('click', async () => {
+            const year = completedYearSelect.value;
+            const month = document.getElementById('completedMonthSelect').value;
+            const res = await fetch(`/api/completed_sales_by_month?year=${year}&month=${month}`);
+            const data = await res.json();
+            if (data.error) {
+                document.getElementById('completedMonthSummary').innerHTML = `<span class="text-red-300">${data.error}</span>`;
+                return;
+            }
+            document.getElementById('completedMonthSummary').innerHTML = `
+                <strong>${data.month}/${data.year}</strong><br>
+                Total Sales: $${data.total.toLocaleString()}<br>
+                Number of Orders: ${data.count}
+            `;
+            // Update the pie chart with the month's total
+            if (completedPieChart) completedPieChart.destroy();
+            completedPieChart = new Chart(document.getElementById('completedPieChart'), {
+                type: 'pie',
+                data: { labels: [`Completed (${month}/${year})`], datasets: [{ data: [data.total], backgroundColor: ['#10b981'] }] },
+                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } }
+            });
+        });
 
-        // Run every time Accounts view is displayed
+        // Force editable elements after each Accounts view load
+        function forceEditable() {
+            document.querySelectorAll('.follower-input').forEach(inp => { inp.disabled = false; inp.style.pointerEvents = 'auto'; inp.style.backgroundColor = 'white'; });
+            document.querySelectorAll('#socialFields input').forEach(inp => { inp.disabled = false; inp.style.pointerEvents = 'auto'; });
+            const yrSel = document.getElementById('followerYearSelect'); if (yrSel) { yrSel.disabled = false; yrSel.style.pointerEvents = 'auto'; }
+        }
         const accountsNav = document.querySelector('.nav-item[data-view="accounts"]');
         if (accountsNav) {
-            accountsNav.addEventListener('click', () => {
-                setTimeout(() => {
-                    forceEditable();
-                    // Re-attach year change event
-                    const yrSelect = document.getElementById('followerYearSelect');
-                    if (yrSelect) {
-                        yrSelect.removeEventListener('change', null);
-                        yrSelect.addEventListener('change', (e) => {
-                            loadFollowerTable(parseInt(e.target.value));
-                            forceEditable();
-                        });
-                    }
-                }, 200);
-            });
+            accountsNav.addEventListener('click', () => { setTimeout(forceEditable, 200); });
         }
-
-        // Also on page load
-        window.addEventListener('load', () => {
-            setTimeout(forceEditable, 500);
-            // Ensure social form saves to DB
-            const socialForm = document.getElementById('socialForm');
-            if (socialForm) {
-                socialForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const inputs = document.querySelectorAll('#socialFields input');
-                    const updates = Array.from(inputs).map(inp => ({
-                        platform: inp.dataset.platform,
-                        url: inp.value
-                    }));
-                    const res = await fetch('/api/social_links', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updates)
-                    });
-                    alert(res.ok ? 'Social links updated in database!' : 'Update failed');
-                });
-            }
-            // Ensure save followers button works even after table reload
-            const saveFolBtn = document.getElementById('saveFollowersBtn');
-            if (saveFolBtn) {
-                saveFolBtn.addEventListener('click', async () => {
-                    const inputs = document.querySelectorAll('#followerTableBody .follower-input');
-                    const updates = [];
-                    inputs.forEach(inp => {
-                        const platform = inp.dataset.platform;
-                        const month = parseInt(inp.dataset.month);
-                        const count = parseInt(inp.value) || 0;
-                        updates.push({ platform, year: currentFollowerYear, month, count });
-                    });
-                    const res = await fetch('/api/followers', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(updates)
-                    });
-                    if (res.ok) {
-                        alert('Follower data saved to database!');
-                        loadFollowerTable(currentFollowerYear);
-                        loadFollowerTrendChart(
-                            document.getElementById('chartPlatformSelect').value,
-                            currentFollowerYear
-                        );
-                    } else {
-                        alert('Error saving data');
-                    }
-                });
-            }
-        });
+        window.addEventListener('load', () => { setTimeout(forceEditable, 500); });
     </script>
 </body>
 </html>
