@@ -87,7 +87,7 @@ class FollowerData(db.Model):
     count = db.Column(db.Integer, nullable=False, default=0)
 
 # -------------------------------
-# Helper Functions (same as before)
+# Helper Functions
 # -------------------------------
 
 def init_demo_data():
@@ -264,7 +264,7 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 # -------------------------------
-# API Endpoints (existing + new)
+# API Endpoints
 # -------------------------------
 
 @app.route('/api/social_links', methods=['GET', 'POST'])
@@ -528,7 +528,6 @@ def update_followers():
     db.session.commit()
     return jsonify({'success': True})
 
-# NEW: Completed Sales by month/year
 @app.route('/api/completed_sales_by_month')
 @login_required
 def completed_sales_by_month():
@@ -548,14 +547,17 @@ def completed_sales_by_month():
     } for s in sales]})
 
 # -------------------------------
-# Create tables and run app
+# Create tables and run app (with drop_all to fix schema)
 # -------------------------------
 
 with app.app_context():
-    db.create_all()
-    init_demo_data()
+    # Force schema reset - delete old tables and recreate with new columns
+    db.drop_all()      # ⚠️ Removes all existing data
+    db.create_all()    # Creates tables with updated schema
+    init_demo_data()   # Populates with fresh demo data
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
+# For Vercel serverless
 app = app
