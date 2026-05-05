@@ -167,7 +167,7 @@
                             <div class="p-3 text-center bg-gray-50"><button id="addLeadBtn" class="text-sm text-green-600">+ Add Test Lead</button></div>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2 bg-white/20 rounded-full px-3 py-1"><div class="w-8 h-8 bg-white rounded-full flex items-center justify-center"><span class="text-[#1a4d3a] text-sm font-bold">VA</span></div><span class="text-sm font-semibold text-white">Admin</span></div>
+                    <div class="flex items-center space-x-2 bg-white/20 rounded-full px-3 py-1"><div class="w-8 h-8 bg-white rounded-full flex items-center justify-center"><span class="text-[#1a4d3a] text-sm font-bold">VA</span></div><span class="text-sm font-semibold text-white">{{ user.username }}</span></div>
                 </div>
             </div>
         </header>
@@ -580,7 +580,7 @@
             const tbody = document.getElementById('followerTableBody');
             tbody.innerHTML = '';
             for(let platform of platforms) {
-                let row = `<tr><td class="font-bold">${platform.charAt(0).toUpperCase()+platform.slice(1)}</td>`;
+                let row = `<td><td class="font-bold">${platform.charAt(0).toUpperCase()+platform.slice(1)}</td>`;
                 for(let i=1; i<=12; i++) {
                     const record = followerData.find(f => f.platform === platform && f.year === year && f.month === i);
                     const count = record ? record.count : 0;
