@@ -75,9 +75,10 @@ class Survey(db.Model):
     customer_phone = db.Column(db.String(20), nullable=False)
     customer_location = db.Column(db.String(200), nullable=False)
     service = db.Column(db.String(200), nullable=False)
-    survey_date = db.Column(db.Date, nullable=False)
+    land_type = db.Column(db.String(20), nullable=False, default='farm')
     area_size = db.Column(db.Float, nullable=False)
     amount = db.Column(db.Float, nullable=False)
+    survey_date = db.Column(db.Date, nullable=False)
     is_done = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -208,7 +209,7 @@ def admin_required(f):
     return decorated_function
 
 # -------------------------------
-# Routes (no setup)
+# Routes
 # -------------------------------
 
 @app.route('/')
@@ -240,7 +241,7 @@ def dashboard():
     return render_template('dashboard.html')
 
 # -------------------------------
-# Admin User Management
+# Admin: User Management
 # -------------------------------
 
 @app.route('/admin/users')
@@ -321,7 +322,7 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 # -------------------------------
-# API Endpoints – Sales (with search, year, month, sort)
+# API Endpoints
 # -------------------------------
 
 @app.route('/api/sales', methods=['GET'])
@@ -434,10 +435,7 @@ def delete_sale(sale_id):
     db.session.commit()
     return jsonify({'success': True})
 
-# -------------------------------
-# Surveys API
-# -------------------------------
-
+# Surveys
 @app.route('/api/surveys', methods=['GET'])
 @login_required
 def get_surveys():
@@ -448,9 +446,10 @@ def get_surveys():
         'customer_phone': s.customer_phone,
         'customer_location': s.customer_location,
         'service': s.service,
-        'survey_date': s.survey_date.isoformat(),
+        'land_type': s.land_type,
         'area_size': s.area_size,
-        'amount': s.amount
+        'amount': s.amount,
+        'survey_date': s.survey_date.isoformat()
     } for s in surveys])
 
 @app.route('/api/surveys', methods=['POST'])
@@ -462,9 +461,10 @@ def add_survey():
         customer_phone=data['customer_phone'],
         customer_location=data['customer_location'],
         service=data['service'],
-        survey_date=datetime.strptime(data['survey_date'], '%Y-%m-%d').date(),
+        land_type=data['land_type'],
         area_size=float(data['area_size']),
-        amount=float(data['amount'])
+        amount=float(data['amount']),
+        survey_date=datetime.strptime(data['survey_date'], '%Y-%m-%d').date()
     )
     db.session.add(survey)
     db.session.commit()
@@ -490,7 +490,7 @@ def mark_survey_done(survey_id):
             service_date=survey.survey_date,
             report_status='sent',
             amount=survey.amount,
-            area_type='farm',
+            area_type=survey.land_type,
             area_size=survey.area_size,
             status='completed',
             invoice_no=invoice_no
@@ -501,10 +501,6 @@ def mark_survey_done(survey_id):
         db.session.commit()
         return jsonify({'success': True, 'sale_id': sale.id})
     return jsonify({'success': False, 'error': 'Already done'})
-
-# -------------------------------
-# Social Links API
-# -------------------------------
 
 @app.route('/api/social_links', methods=['GET', 'POST'])
 @login_required
@@ -521,10 +517,7 @@ def handle_social_links():
         db.session.commit()
         return jsonify({'success': True})
 
-# -------------------------------
-# Analytics Endpoints
-# -------------------------------
-
+# Analytics endpoints
 @app.route('/api/sales_trend')
 @login_required
 def sales_trend():
@@ -607,10 +600,6 @@ def income_expenditure():
         income_values = [income_quarter.get(q, 0) for q in all_quarters]
         expense_values = [expense_quarter.get(q, 0) for q in all_quarters]
         return jsonify({'labels': all_quarters, 'income': income_values, 'expenditure': expense_values})
-
-# -------------------------------
-# Other API endpoints
-# -------------------------------
 
 @app.route('/api/notifications')
 @login_required
@@ -729,35 +718,49 @@ def completed_sales_by_month():
     } for s in sales]})
 
 # -------------------------------
-# Auto-create admin from environment variables (only if no users exist)
+# Daily reminder for upcoming surveys (run when app starts and daily via cron)
 # -------------------------------
+def send_survey_reminders():
+    tomorrow = date.today() + timedelta(days=1)
+    upcoming = Survey.query.filter_by(is_done=False).filter(Survey.survey_date == tomorrow).all()
+    for survey in upcoming:
+        existing = Notification.query.filter_by(
+            message=f"🔔 Reminder: Survey for {survey.customer_name} tomorrow",
+            type='survey_reminder'
+        ).first()
+        if not existing:
+            notif = Notification(
+                message=f"🔔 Reminder: Survey for {survey.customer_name} ({survey.service}) scheduled for tomorrow ({survey.survey_date}). Location: {survey.customer_location}, Land: {survey.land_type}, Size: {survey.area_size} acres, Amount: ${survey.amount}",
+                type='survey_reminder'
+            )
+            db.session.add(notif)
+            db.session.commit()
 
+# -------------------------------
+# Auto-create admin
+# -------------------------------
 def create_admin_from_env():
     if User.query.count() == 0:
         admin_username = os.environ.get('ADMIN_USERNAME')
         admin_password = os.environ.get('ADMIN_PASSWORD')
         admin_email = os.environ.get('ADMIN_EMAIL', 'admin@verdisol.com')
-        
         if not admin_username or not admin_password:
-            # Fallback to a default admin (only if env vars missing)
             admin_username = 'admin'
             admin_password = 'admin123'
-        
         admin = User(username=admin_username, email=admin_email, is_admin=True)
         admin.set_password(admin_password)
         db.session.add(admin)
         db.session.commit()
-        print(f"Admin user created: {admin_username}")
 
 # -------------------------------
 # Create tables and run
 # -------------------------------
-
 with app.app_context():
-    db.drop_all()      # Comment out after first deploy to keep data
+    db.drop_all()      # Comment out after first deploy
     db.create_all()
     init_demo_data()
     create_admin_from_env()
+    send_survey_reminders()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
