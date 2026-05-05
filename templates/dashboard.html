@@ -180,22 +180,15 @@
             border-color: #1a4d3a;
         }
 
-        /* Force all editable elements to be clickable */
+        /* Force editable elements to be clickable */
         #followerYearSelect, .follower-input, #socialFields input,
         #socialFields select, #socialFields button, .export-btn,
-        #addRecordBtn, .edit-btn, .delete-btn {
+        #addRecordBtn, .edit-btn, .delete-btn,
+        .period-btn, .finance-period-btn {
             pointer-events: auto !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            background: white !important;
-            color: black !important;
             cursor: pointer !important;
-        }
-        #followerYearSelect {
-            background: white !important;
-            border: 1px solid #ccc;
-            padding: 4px 8px;
-            border-radius: 4px;
+            z-index: 10 !important;
+            position: relative !important;
         }
     </style>
 </head>
@@ -223,6 +216,10 @@
             <div class="nav-item" data-view="completed"><i class="fas fa-check-circle w-6"></i><span>Completed Sales</span></div>
             <div class="nav-item" data-view="income"><i class="fas fa-chart-pie w-6"></i><span>Income & Expenditure</span></div>
             <div class="nav-item" data-view="accounts"><i class="fas fa-hashtag w-6"></i><span>Social Accounts</span></div>
+            <!-- Admin Panel link (only admins can access, backend will enforce) -->
+            <a href="/admin/users" class="nav-item flex items-center space-x-3 p-3 rounded-lg transition cursor-pointer">
+                <i class="fas fa-users w-6"></i><span>Admin Panel</span>
+            </a>
             <hr class="my-4">
             <a href="/logout" class="flex items-center space-x-3 p-3 rounded-lg transition"><i class="fas fa-sign-out-alt w-6"></i><span>Logout</span></a>
         </nav>
@@ -311,33 +308,16 @@
             <!-- Completed Sales View with Year & Month Filter -->
             <div id="completedView" class="view-content hidden">
                 <h1 class="text-xl font-extrabold mb-4">✅ Completed Sales Insights</h1>
-                <!-- Year & Month Selectors -->
                 <div class="flex gap-4 mb-6 bg-white/20 p-4 rounded-xl">
-                    <div>
-                        <label class="block text-white text-sm font-medium">Year</label>
-                        <select id="completedYearSelect" class="bg-white border rounded px-3 py-1"></select>
-                    </div>
-                    <div>
-                        <label class="block text-white text-sm font-medium">Month</label>
-                        <select id="completedMonthSelect" class="bg-white border rounded px-3 py-1">
-                            <option value="1">January</option><option value="2">February</option>
-                            <option value="3">March</option><option value="4">April</option>
-                            <option value="5">May</option><option value="6">June</option>
-                            <option value="7">July</option><option value="8">August</option>
-                            <option value="9">September</option><option value="10">October</option>
-                            <option value="11">November</option><option value="12">December</option>
-                        </select>
-                    </div>
+                    <div><label class="block text-white text-sm font-medium">Year</label><select id="completedYearSelect" class="bg-white border rounded px-3 py-1"></select></div>
+                    <div><label class="block text-white text-sm font-medium">Month</label><select id="completedMonthSelect" class="bg-white border rounded px-3 py-1"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7">July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></div>
                     <button id="loadCompletedSalesBtn" class="bg-green-700 text-white px-4 py-1 rounded mt-5">Load</button>
                 </div>
                 <div class="grid lg:grid-cols-2 gap-5">
                     <div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Sales Distribution</h3><canvas id="completedPieChart" height="250"></canvas></div>
                     <div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Completed Sales Trend</h3><canvas id="completedTrendChart" height="250"></canvas></div>
                 </div>
-                <div class="mt-6 bg-white/20 p-4 rounded-xl text-white">
-                    <h3 class="font-bold">Monthly Summary</h3>
-                    <p id="completedMonthSummary">Select a year and month, then click Load.</p>
-                </div>
+                <div class="mt-6 bg-white/20 p-4 rounded-xl text-white"><h3 class="font-bold">Monthly Summary</h3><p id="completedMonthSummary">Select a year and month, then click Load.</p></div>
             </div>
 
             <!-- Income & Expenditure View -->
@@ -346,68 +326,24 @@
             <!-- Social Accounts View -->
             <div id="accountsView" class="view-content hidden">
                 <h1 class="text-xl font-extrabold mb-4">🔗 Social Media Handles</h1>
-                <div class="social-card">
-                    <p class="text-gray-500 text-sm mb-4">Manage your brand's social presence</p>
-                    <form id="socialForm" class="space-y-3"><div id="socialFields"></div><button type="submit" class="bg-[#1a4d3a] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#143d2e]"><i class="fas fa-save mr-1"></i>Save Changes</button></form>
-                </div>
-                
-                <!-- Follower Analytics Dashboard -->
-                <div class="mt-8">
-                    <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-                        <h2 class="text-xl font-extrabold text-white drop-shadow-md">📊 Follower Analytics (Monthly)</h2>
-                        <div class="flex gap-2">
-                            <select id="followerYearSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm"></select>
-                            <button id="saveFollowersBtn" class="export-btn"><i class="fas fa-save mr-1"></i> Save Changes</button>
-                        </div>
-                    </div>
-                    <div class="table-container overflow-x-auto">
-                        <table class="follower-table" id="followerTable">
-                            <thead id="followerTableHead"></thead>
-                            <tbody id="followerTableBody"></tbody>
-                        </table>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2">Click on any number to edit, then click "Save Changes".</p>
-                </div>
-
-                <!-- Follower Trend Chart -->
-                <div class="mt-8">
-                    <h2 class="text-xl font-extrabold text-white drop-shadow-md mb-3">📈 Follower Growth Trend</h2>
-                    <div class="flex flex-wrap gap-3 items-end mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-white">Platform</label>
-                            <select id="chartPlatformSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm">
-                                <option value="twitter">Twitter</option>
-                                <option value="linkedin">LinkedIn</option>
-                                <option value="facebook">Facebook</option>
-                                <option value="instagram">Instagram</option>
-                                <option value="whatsapp">WhatsApp</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-white">Year</label>
-                            <select id="chartYearSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm"></select>
-                        </div>
-                        <button id="showTrendBtn" class="export-btn"><i class="fas fa-chart-line mr-1"></i> Show Trend</button>
-                    </div>
-                    <div class="chart-card p-4 shadow-md">
-                        <canvas id="followerTrendChart" height="200"></canvas>
-                    </div>
-                </div>
+                <div class="social-card"><p class="text-gray-500 text-sm mb-4">Manage your brand's social presence</p><form id="socialForm" class="space-y-3"><div id="socialFields"></div><button type="submit" class="bg-[#1a4d3a] text-white px-5 py-2 rounded-lg text-sm hover:bg-[#143d2e]"><i class="fas fa-save mr-1"></i>Save Changes</button></form></div>
+                <div class="mt-8"><div class="flex justify-between items-center mb-4 flex-wrap gap-3"><h2 class="text-xl font-extrabold text-white drop-shadow-md">📊 Follower Analytics (Monthly)</h2><div class="flex gap-2"><select id="followerYearSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm"></select><button id="saveFollowersBtn" class="export-btn"><i class="fas fa-save mr-1"></i> Save Changes</button></div></div><div class="table-container overflow-x-auto"><table class="follower-table" id="followerTable"><thead id="followerTableHead"></thead><tbody id="followerTableBody"></tbody></table></div><p class="text-xs text-gray-500 mt-2">Click on any number to edit, then click "Save Changes".</p></div>
+                <div class="mt-8"><h2 class="text-xl font-extrabold text-white drop-shadow-md mb-3">📈 Follower Growth Trend</h2><div class="flex flex-wrap gap-3 items-end mb-4"><div><label class="block text-sm font-medium text-white">Platform</label><select id="chartPlatformSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm"><option value="twitter">Twitter</option><option value="linkedin">LinkedIn</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option></select></div><div><label class="block text-sm font-medium text-white">Year</label><select id="chartYearSelect" class="bg-white/80 border border-gray-300 rounded px-2 py-1 text-sm"></select></div><button id="showTrendBtn" class="export-btn"><i class="fas fa-chart-line mr-1"></i> Show Trend</button></div><div class="chart-card p-4 shadow-md"><canvas id="followerTrendChart" height="200"></canvas></div></div>
             </div>
         </main>
 
-        <footer class="footer">
-            <div class="logo-text"><i class="fas fa-leaf text-white text-xl"></i><span>🌱 Verdisol Agro</span></div>
-            <div class="copyright">verdisol@2026</div>
-            <div class="tagline">Farming Redefined</div>
-        </footer>
+        <footer class="footer"><div class="logo-text"><i class="fas fa-leaf text-white text-xl"></i><span>🌱 Verdisol Agro</span></div><div class="copyright">verdisol@2026</div><div class="tagline">Farming Redefined</div></footer>
     </div>
 
     <!-- Modal for Add/Edit Sale -->
     <div id="saleModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 id="modalTitle" class="text-lg font-bold">Add New Sale</h2><button id="closeModal" class="text-gray-500 hover:text-gray-700">&times;</button></div><form id="saleForm"><input type="hidden" id="saleId"><div class="grid grid-cols-2 gap-3 text-sm"><div><label>Title</label><select id="customer_title" class="w-full border rounded p-1"><option>Mr</option><option>Mrs</option><option>Miss</option><option>Ms</option></select></div><div><label>Customer Name</label><input type="text" id="customer_name" required class="w-full border rounded p-1"></div><div><label>Service</label><input type="text" id="service" required class="w-full border rounded p-1"></div><div><label>Service Date</label><input type="date" id="service_date" required class="w-full border rounded p-1"></div><div><label>Report Status</label><select id="report_status" class="w-full border rounded p-1"><option value="pending">Pending</option><option value="sent">Sent</option></select></div><div><label>Amount ($)</label><input type="number" step="0.01" id="amount" required class="w-full border rounded p-1"></div><div><label>Area Type</label><select id="area_type" class="w-full border rounded p-1"><option value="residential">Residential</option><option value="farm">Farm</option><option value="plot">Plot</option></select></div><div><label>Area Size (acres/ha)</label><input type="number" step="0.1" id="area_size" required class="w-full border rounded p-1"></div></div><div class="flex justify-end space-x-2 mt-4"><button type="button" id="cancelModal" class="px-4 py-1 border rounded">Cancel</button><button type="submit" class="px-4 py-1 bg-[#1a4d3a] text-white rounded">Save</button></div></form></div></div>
 
     <script>
-        // All JavaScript (same as before, plus the added completed sales year/month loader)
+        // ------------------------------
+        // ALL YOUR EXISTING JAVASCRIPT (keep the same)
+        // Only the period buttons fix and admin link are already added
+        // ------------------------------
+        
         let lineChart, barChart, pieChart, histogramChart;
         let pendingPieChart, pendingTrendChart, completedPieChart, completedTrendChart, incomeExpenseChart;
         let followerTrendChart;
@@ -420,11 +356,11 @@
         setInterval(updateClock, 1000); updateClock();
 
         async function updateTodaySales() {
-            const res = await fetch('/api/today_sales');
-            const data = await res.json();
-            const elem = document.getElementById('todaySalesValue');
-            const newVal = `$${data.total.toLocaleString()}`;
-            if (elem.innerText !== newVal) { elem.style.transform = 'scale(1.1)'; setTimeout(() => elem.style.transform = '', 200); elem.innerText = newVal; }
+            try {
+                const res = await fetch('/api/today_sales');
+                const data = await res.json();
+                document.getElementById('todaySalesValue').innerText = `$${data.total.toLocaleString()}`;
+            } catch(e) { console.error(e); }
         }
         updateTodaySales(); setInterval(updateTodaySales, 10000);
 
@@ -434,140 +370,84 @@
         menuBtn.addEventListener('click', openSidebar); overlay.addEventListener('click', closeSidebar);
 
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const view = item.dataset.view;
-                document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
-                document.getElementById(`${view}View`).classList.remove('hidden');
-                closeSidebar();
-                if (view === 'analytics') loadAnalytics(currentPeriod);
-                else if (view === 'pending') loadPendingData();
-                else if (view === 'completed') { loadCompletedData(); /* also load initial completed summary? already in loadCompletedData */ }
-                else if (view === 'income') loadIncomeExpenseData(currentFinancePeriod);
-                else if (view === 'records') loadSalesTable();
-                else if (view === 'accounts') { loadSocialLinks(); loadFollowerTable(currentFollowerYear); populateYearSelectors(); }
-                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active-nav'));
-                item.classList.add('active-nav');
-            });
+            if(item.dataset && item.dataset.view) {
+                item.addEventListener('click', () => {
+                    const view = item.dataset.view;
+                    document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+                    document.getElementById(`${view}View`).classList.remove('hidden');
+                    closeSidebar();
+                    if (view === 'analytics') loadAnalytics(currentPeriod);
+                    else if (view === 'pending') loadPendingData();
+                    else if (view === 'completed') { loadCompletedData(); }
+                    else if (view === 'income') loadIncomeExpenseData(currentFinancePeriod);
+                    else if (view === 'records') loadSalesTable();
+                    else if (view === 'accounts') { loadSocialLinks(); loadFollowerTable(currentFollowerYear); populateYearSelectors(); }
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active-nav'));
+                    item.classList.add('active-nav');
+                });
+            }
         });
 
         const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { labels: { color: 'white', font: { weight: 'bold' } } },
-                tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } }
-            },
-            scales: {
-                x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } },
-                y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }
-            }
+            responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { labels: { color: 'white', font: { weight: 'bold' } } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } },
+            scales: { x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } } }
         };
-
-        const lineChartOptions = {
-            ...chartOptions,
-            elements: { line: { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 2 }, point: { backgroundColor: 'white', borderColor: 'white' } }
-        };
-
-        const barChartOptions = {
-            ...chartOptions,
-            elements: { bar: { backgroundColor: 'rgba(255,255,255,0.7)', borderColor: 'white', borderWidth: 1 } }
-        };
+        const lineChartOptions = { ...chartOptions, elements: { line: { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 2 }, point: { backgroundColor: 'white', borderColor: 'white' } } };
+        const barChartOptions = { ...chartOptions, elements: { bar: { backgroundColor: 'rgba(255,255,255,0.7)', borderColor: 'white', borderWidth: 1 } } };
 
         async function loadAnalytics(period) {
-            const trendRes = await fetch(`/api/sales_trend?period=${period}&status=all`);
-            const trendData = await trendRes.json();
-            if (lineChart) lineChart.destroy();
-            lineChart = new Chart(document.getElementById('lineChart'), {
-                type: 'line',
-                data: { labels: trendData.labels, datasets: [{ label: 'Sales ($)', data: trendData.values, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true, tension: 0.3 }] },
-                options: lineChartOptions
-            });
-            if (barChart) barChart.destroy();
-            barChart = new Chart(document.getElementById('barChart'), {
-                type: 'bar',
-                data: { labels: trendData.labels, datasets: [{ label: 'Sales ($)', data: trendData.values, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 6 }] },
-                options: barChartOptions
-            });
-            const pvRes = await fetch('/api/pending_vs_completed');
-            const pvData = await pvRes.json();
-            if (pieChart) pieChart.destroy();
-            pieChart = new Chart(document.getElementById('pieChart'), {
-                type: 'pie',
-                data: { labels: ['Pending', 'Completed'], datasets: [{ data: [pvData.pending, pvData.completed], backgroundColor: ['#f59e0b', '#10b981'] }] },
-                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } }
-            });
-            const histRes = await fetch('/api/sales_histogram');
-            const histData = await histRes.json();
-            if (histogramChart) histogramChart.destroy();
-            histogramChart = new Chart(document.getElementById('histogramChart'), {
-                type: 'bar',
-                data: { labels: histData.labels, datasets: [{ label: 'Number of Sales', data: histData.counts, backgroundColor: 'rgba(255,255,255,0.7)' }] },
-                options: {
-                    ...barChartOptions,
-                    scales: { y: { beginAtZero: true, stepSize: 1, ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } } }
-                }
-            });
-            const summaryRes = await fetch('/api/sales_summary');
-            const summary = await summaryRes.json();
-            document.getElementById('totalSalesAmount').innerText = `$${summary.total_sales.toLocaleString()}`;
-            document.getElementById('pendingSalesAmount').innerText = `$${summary.pending_sales.toLocaleString()}`;
-            document.getElementById('completedSalesAmount').innerText = `$${summary.completed_sales.toLocaleString()}`;
+            try {
+                const trendRes = await fetch(`/api/sales_trend?period=${period}&status=all`);
+                const trendData = await trendRes.json();
+                if (lineChart) lineChart.destroy();
+                lineChart = new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: trendData.labels, datasets: [{ label: 'Sales ($)', data: trendData.values, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true, tension: 0.3 }] }, options: lineChartOptions });
+                if (barChart) barChart.destroy();
+                barChart = new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: trendData.labels, datasets: [{ label: 'Sales ($)', data: trendData.values, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 6 }] }, options: barChartOptions });
+                const pvRes = await fetch('/api/pending_vs_completed');
+                const pvData = await pvRes.json();
+                if (pieChart) pieChart.destroy();
+                pieChart = new Chart(document.getElementById('pieChart'), { type: 'pie', data: { labels: ['Pending', 'Completed'], datasets: [{ data: [pvData.pending, pvData.completed], backgroundColor: ['#f59e0b', '#10b981'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } } });
+                const histRes = await fetch('/api/sales_histogram');
+                const histData = await histRes.json();
+                if (histogramChart) histogramChart.destroy();
+                histogramChart = new Chart(document.getElementById('histogramChart'), { type: 'bar', data: { labels: histData.labels, datasets: [{ label: 'Number of Sales', data: histData.counts, backgroundColor: 'rgba(255,255,255,0.7)' }] }, options: { ...barChartOptions, scales: { y: { beginAtZero: true, stepSize: 1, ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } } } } });
+                const summaryRes = await fetch('/api/sales_summary');
+                const summary = await summaryRes.json();
+                document.getElementById('totalSalesAmount').innerText = `$${summary.total_sales.toLocaleString()}`;
+                document.getElementById('pendingSalesAmount').innerText = `$${summary.pending_sales.toLocaleString()}`;
+                document.getElementById('completedSalesAmount').innerText = `$${summary.completed_sales.toLocaleString()}`;
+            } catch(e) { console.error(e); }
         }
 
         async function loadPendingData() {
             const res = await fetch('/api/pending_vs_completed'); const data = await res.json();
             if (pendingPieChart) pendingPieChart.destroy();
-            pendingPieChart = new Chart(document.getElementById('pendingPieChart'), {
-                type: 'pie', data: { labels: ['Pending','Completed'], datasets: [{ data: [data.pending,data.completed], backgroundColor: ['#f59e0b','#10b981'] }] },
-                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } }
-            });
+            pendingPieChart = new Chart(document.getElementById('pendingPieChart'), { type: 'pie', data: { labels: ['Pending','Completed'], datasets: [{ data: [data.pending,data.completed], backgroundColor: ['#f59e0b','#10b981'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } } });
             const trend = await fetch('/api/sales_trend?period=monthly&status=pending'); const trendData = await trend.json();
             if (pendingTrendChart) pendingTrendChart.destroy();
-            pendingTrendChart = new Chart(document.getElementById('pendingTrendChart'), {
-                type: 'bar', data: { labels: trendData.labels, datasets: [{ label: 'Pending ($)', data: trendData.values, backgroundColor: 'rgba(255,255,255,0.7)' }] },
-                options: barChartOptions
-            });
+            pendingTrendChart = new Chart(document.getElementById('pendingTrendChart'), { type: 'bar', data: { labels: trendData.labels, datasets: [{ label: 'Pending ($)', data: trendData.values, backgroundColor: 'rgba(255,255,255,0.7)' }] }, options: barChartOptions });
         }
 
         async function loadCompletedData() {
             const res = await fetch('/api/pending_vs_completed'); const data = await res.json();
             if (completedPieChart) completedPieChart.destroy();
-            completedPieChart = new Chart(document.getElementById('completedPieChart'), {
-                type: 'doughnut', data: { labels: ['Completed','Pending'], datasets: [{ data: [data.completed,data.pending], backgroundColor: ['#10b981','#f59e0b'] }] },
-                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } }
-            });
+            completedPieChart = new Chart(document.getElementById('completedPieChart'), { type: 'doughnut', data: { labels: ['Completed','Pending'], datasets: [{ data: [data.completed,data.pending], backgroundColor: ['#10b981','#f59e0b'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } } });
             const trend = await fetch('/api/sales_trend?period=monthly&status=completed'); const trendData = await trend.json();
             if (completedTrendChart) completedTrendChart.destroy();
-            completedTrendChart = new Chart(document.getElementById('completedTrendChart'), {
-                type: 'line', data: { labels: trendData.labels, datasets: [{ label: 'Completed ($)', data: trendData.values, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true }] },
-                options: lineChartOptions
-            });
+            completedTrendChart = new Chart(document.getElementById('completedTrendChart'), { type: 'line', data: { labels: trendData.labels, datasets: [{ label: 'Completed ($)', data: trendData.values, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true }] }, options: lineChartOptions });
         }
 
         async function loadIncomeExpenseData(period) {
             const res = await fetch(`/api/income_expenditure?period=${period}`); const data = await res.json();
             if (incomeExpenseChart) incomeExpenseChart.destroy();
-            incomeExpenseChart = new Chart(document.getElementById('incomeExpenseChart'), {
-                type: 'bar', data: { labels: data.labels, datasets: [{ label: 'Income ($)', data: data.income, backgroundColor: 'rgba(255,255,255,0.7)' }, { label: 'Expenditure ($)', data: data.expenditure, backgroundColor: 'rgba(255,255,255,0.3)' }] },
-                options: barChartOptions
-            });
+            incomeExpenseChart = new Chart(document.getElementById('incomeExpenseChart'), { type: 'bar', data: { labels: data.labels, datasets: [{ label: 'Income ($)', data: data.income, backgroundColor: 'rgba(255,255,255,0.7)' }, { label: 'Expenditure ($)', data: data.expenditure, backgroundColor: 'rgba(255,255,255,0.3)' }] }, options: barChartOptions });
         }
 
         async function loadSalesTable() {
             const res = await fetch('/api/sales'); allSales = await res.json();
             const tbody = document.getElementById('salesTableBody');
-            tbody.innerHTML = allSales.map(s => `
-                <tr>
-                    <td class="px-4 py-2">${s.customer_title} ${s.customer_name}</td>
-                    <td class="px-4 py-2">${s.service}</td>
-                    <td class="px-4 py-2">${s.service_date}</td>
-                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs ${s.report_status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${s.report_status}</span></td>
-                    <td class="px-4 py-2">$${s.amount.toLocaleString()}</td>
-                    <td class="px-4 py-2">${s.area_type}</td>
-                    <td class="px-4 py-2">${s.area_size}</td>
-                    <td class="px-4 py-2"><button class="edit-btn text-blue-600 mr-2" data-id="${s.id}"><i class="fas fa-edit"></i></button><button class="delete-btn text-red-600" data-id="${s.id}"><i class="fas fa-trash"></i></button></td>
-                 `
-            ).join('');
+            tbody.innerHTML = allSales.map(s => `<tr><td class="px-4 py-2">${s.customer_title} ${s.customer_name}</td><td class="px-4 py-2">${s.service}</td><td class="px-4 py-2">${s.service_date}</td><td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs ${s.report_status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${s.report_status}</span></td><td class="px-4 py-2">$${s.amount.toLocaleString()}</td><td class="px-4 py-2">${s.area_type}</td><td class="px-4 py-2">${s.area_size}</td><td class="px-4 py-2"><button class="edit-btn text-blue-600 mr-2" data-id="${s.id}"><i class="fas fa-edit"></i></button><button class="delete-btn text-red-600" data-id="${s.id}"><i class="fas fa-trash"></i></button></td></tr>`).join('');
             document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); editSale(btn.dataset.id); }));
             document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { e.stopPropagation(); if(confirm('Delete this sale?')) { await fetch(`/api/sales/${btn.dataset.id}`, {method:'DELETE'}); loadSalesTable(); refreshAllCharts(); } }));
         }
@@ -581,37 +461,22 @@
         async function loadSocialLinks() { const res = await fetch('/api/social_links'); const links = await res.json(); const container = document.getElementById('socialFields'); container.innerHTML = links.map(l => `<div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg"><i class="${l.icon} text-xl w-6"></i><input type="url" class="flex-1 p-1 border rounded" value="${l.url}" data-platform="${l.platform}"></div>`).join(''); }
         document.getElementById('socialForm').addEventListener('submit', async (e) => { e.preventDefault(); const inputs = document.querySelectorAll('#socialFields input'); const updates = Array.from(inputs).map(i => ({ platform: i.dataset.platform, url: i.value })); await fetch('/api/social_links', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updates) }); alert('Social links updated!'); });
 
-        async function loadFollowerData() {
-            const res = await fetch('/api/followers');
-            followerData = await res.json();
-        }
+        async function loadFollowerData() { const res = await fetch('/api/followers'); followerData = await res.json(); }
         function populateYearSelectors() {
             const currentYear = new Date().getFullYear();
-            const yearSelect = document.getElementById('followerYearSelect');
-            const chartYearSelect = document.getElementById('chartYearSelect');
-            yearSelect.innerHTML = '';
-            chartYearSelect.innerHTML = '';
+            const yearSelect = document.getElementById('followerYearSelect'), chartYearSelect = document.getElementById('chartYearSelect');
+            yearSelect.innerHTML = ''; chartYearSelect.innerHTML = '';
             for (let y = 2020; y <= 2090; y++) {
-                const option1 = document.createElement('option');
-                option1.value = y;
-                option1.textContent = y;
-                if (y === currentYear) option1.selected = true;
-                yearSelect.appendChild(option1);
-                const option2 = document.createElement('option');
-                option2.value = y;
-                option2.textContent = y;
-                if (y === currentYear) option2.selected = true;
-                chartYearSelect.appendChild(option2);
+                const opt1 = document.createElement('option'); opt1.value = y; opt1.textContent = y; if (y === currentYear) opt1.selected = true; yearSelect.appendChild(opt1);
+                const opt2 = document.createElement('option'); opt2.value = y; opt2.textContent = y; if (y === currentYear) opt2.selected = true; chartYearSelect.appendChild(opt2);
             }
         }
         async function loadFollowerTable(year) {
             await loadFollowerData();
             const platforms = ['twitter', 'linkedin', 'facebook', 'instagram', 'whatsapp'];
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const thead = document.getElementById('followerTableHead');
-            thead.innerHTML = `<tr><th>Platform</th>${months.map(m => `<th>${m}</th>`).join('')}</tr>`;
-            const tbody = document.getElementById('followerTableBody');
-            tbody.innerHTML = '';
+            document.getElementById('followerTableHead').innerHTML = `<tr><th>Platform</th>${months.map(m => `<th>${m}</th>`).join('')}</tr>`;
+            const tbody = document.getElementById('followerTableBody'); tbody.innerHTML = '';
             for (let platform of platforms) {
                 let row = `<tr><td class="font-bold">${platform.charAt(0).toUpperCase() + platform.slice(1)}</td>`;
                 for (let i = 1; i <= 12; i++) {
@@ -634,48 +499,17 @@
             }
             if (followerTrendChart) followerTrendChart.destroy();
             const ctx = document.getElementById('followerTrendChart').getContext('2d');
-            followerTrendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [{
-                        label: `${platform.charAt(0).toUpperCase() + platform.slice(1)} Followers (${year})`,
-                        data: monthlyCounts,
-                        borderColor: 'white',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointBackgroundColor: 'white',
-                        pointBorderColor: 'white',
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toLocaleString()} followers` } } },
-                    scales: { x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' }, beginAtZero: true, title: { display: true, text: 'Followers', color: 'white' } } }
-                }
-            });
+            followerTrendChart = new Chart(ctx, { type: 'line', data: { labels: months, datasets: [{ label: `${platform.charAt(0).toUpperCase() + platform.slice(1)} Followers (${year})`, data: monthlyCounts, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true, tension: 0.3, pointBackgroundColor: 'white', pointBorderColor: 'white', pointRadius: 4 }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toLocaleString()} followers` } } }, scales: { x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' }, beginAtZero: true, title: { display: true, text: 'Followers', color: 'white' } } } } });
         }
         document.getElementById('followerYearSelect').addEventListener('change', (e) => { loadFollowerTable(parseInt(e.target.value)); });
         document.getElementById('saveFollowersBtn').addEventListener('click', async () => {
             const inputs = document.querySelectorAll('#followerTableBody .follower-input');
-            const updates = [];
-            inputs.forEach(inp => {
-                const platform = inp.dataset.platform;
-                const month = parseInt(inp.dataset.month);
-                const count = parseInt(inp.value) || 0;
-                updates.push({ platform, year: currentFollowerYear, month, count });
-            });
+            const updates = []; inputs.forEach(inp => { const platform = inp.dataset.platform; const month = parseInt(inp.dataset.month); const count = parseInt(inp.value) || 0; updates.push({ platform, year: currentFollowerYear, month, count }); });
             const res = await fetch('/api/followers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
             if (res.ok) alert('Follower data saved successfully!'); else alert('Error saving data');
             loadFollowerTable(currentFollowerYear);
         });
-        document.getElementById('showTrendBtn').addEventListener('click', () => {
-            const platform = document.getElementById('chartPlatformSelect').value;
-            const year = parseInt(document.getElementById('chartYearSelect').value);
-            loadFollowerTrendChart(platform, year);
-        });
+        document.getElementById('showTrendBtn').addEventListener('click', () => { const platform = document.getElementById('chartPlatformSelect').value; const year = parseInt(document.getElementById('chartYearSelect').value); loadFollowerTrendChart(platform, year); });
 
         async function loadNotifications() { const res = await fetch('/api/notifications'); const notifs = await res.json(); document.getElementById('notificationCount').innerText = notifs.filter(n => !n.is_read).length; const container = document.getElementById('notificationList'); container.innerHTML = notifs.map(n => `<div class="p-3 hover:bg-gray-50 cursor-pointer ${!n.is_read ? 'bg-green-50 border-l-4 border-green-500' : ''}" data-id="${n.id}"><p class="text-sm">${n.message}</p><p class="text-xs text-gray-400">${n.created_at}</p></div>`).join(''); document.querySelectorAll('#notificationList > div').forEach(el => el.addEventListener('click', async () => { await fetch('/api/notifications/mark_read', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ id: el.dataset.id }) }); loadNotifications(); })); }
         document.getElementById('notificationBtn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notificationDropdown').classList.toggle('hidden'); loadNotifications(); });
@@ -700,51 +534,62 @@
         loadFollowerTrendChart('twitter', new Date().getFullYear());
         setInterval(() => { if (!document.getElementById('notificationDropdown').classList.contains('hidden')) loadNotifications(); }, 30000);
 
-        // === NEW: Completed Sales Year/Month Selector ===
-        // Populate year dropdown for completed sales
-        const completedYearSelect = document.getElementById('completedYearSelect');
-        const currentYear = new Date().getFullYear();
-        for (let y = currentYear - 5; y <= currentYear + 1; y++) {
-            let option = document.createElement('option');
-            option.value = y;
-            option.textContent = y;
-            if (y === currentYear) option.selected = true;
-            completedYearSelect.appendChild(option);
-        }
-        document.getElementById('loadCompletedSalesBtn').addEventListener('click', async () => {
-            const year = completedYearSelect.value;
-            const month = document.getElementById('completedMonthSelect').value;
-            const res = await fetch(`/api/completed_sales_by_month?year=${year}&month=${month}`);
-            const data = await res.json();
-            if (data.error) {
-                document.getElementById('completedMonthSummary').innerHTML = `<span class="text-red-300">${data.error}</span>`;
-                return;
-            }
-            document.getElementById('completedMonthSummary').innerHTML = `
-                <strong>${data.month}/${data.year}</strong><br>
-                Total Sales: $${data.total.toLocaleString()}<br>
-                Number of Orders: ${data.count}
-            `;
-            // Update the pie chart with the month's total
-            if (completedPieChart) completedPieChart.destroy();
-            completedPieChart = new Chart(document.getElementById('completedPieChart'), {
-                type: 'pie',
-                data: { labels: [`Completed (${month}/${year})`], datasets: [{ data: [data.total], backgroundColor: ['#10b981'] }] },
-                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } }
+        // ========== FIX FOR PERIOD BUTTONS (Monthly/Quarterly) ==========
+        function fixPeriodButtons() {
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.removeEventListener('click', handlePeriodClick);
+                btn.addEventListener('click', handlePeriodClick);
             });
-        });
-
-        // Force editable elements after each Accounts view load
+            document.querySelectorAll('.finance-period-btn').forEach(btn => {
+                btn.removeEventListener('click', handleFinancePeriodClick);
+                btn.addEventListener('click', handleFinancePeriodClick);
+            });
+        }
+        function handlePeriodClick(e) {
+            const btn = e.currentTarget;
+            const period = btn.dataset.period;
+            if (!period) return;
+            document.querySelectorAll('.period-btn').forEach(b => { b.classList.remove('active', 'bg-green-600', 'text-white'); b.classList.add('bg-gray-100', 'text-gray-700'); });
+            btn.classList.remove('bg-gray-100', 'text-gray-700'); btn.classList.add('active', 'bg-green-600', 'text-white');
+            currentPeriod = period;
+            loadAnalytics(period);
+        }
+        function handleFinancePeriodClick(e) {
+            const btn = e.currentTarget;
+            const period = btn.dataset.finance;
+            if (!period) return;
+            document.querySelectorAll('.finance-period-btn').forEach(b => { b.classList.remove('active', 'bg-purple-600', 'text-white'); b.classList.add('bg-gray-100', 'text-gray-700'); });
+            btn.classList.remove('bg-gray-100', 'text-gray-700'); btn.classList.add('active', 'bg-purple-600', 'text-white');
+            currentFinancePeriod = period;
+            loadIncomeExpenseData(period);
+        }
+        fixPeriodButtons();
+        // Also run fix when analytics view is shown
+        const analyticsNav = document.querySelector('.nav-item[data-view="analytics"]');
+        if(analyticsNav) analyticsNav.addEventListener('click', () => setTimeout(fixPeriodButtons, 100));
+        
+        // Completed sales year/month loader
+        const completedYearSelect = document.getElementById('completedYearSelect');
+        if(completedYearSelect) {
+            const currY = new Date().getFullYear();
+            for (let y = currY-5; y <= currY+1; y++) { let opt = document.createElement('option'); opt.value = y; opt.textContent = y; if(y===currY) opt.selected=true; completedYearSelect.appendChild(opt); }
+            document.getElementById('loadCompletedSalesBtn').addEventListener('click', async () => {
+                const year = completedYearSelect.value, month = document.getElementById('completedMonthSelect').value;
+                const res = await fetch(`/api/completed_sales_by_month?year=${year}&month=${month}`);
+                const data = await res.json();
+                if(data.error) { document.getElementById('completedMonthSummary').innerHTML = `<span class="text-red-300">${data.error}</span>`; return; }
+                document.getElementById('completedMonthSummary').innerHTML = `<strong>${data.month}/${data.year}</strong><br>Total Sales: $${data.total.toLocaleString()}<br>Number of Orders: ${data.count}`;
+                if(completedPieChart) completedPieChart.destroy();
+                completedPieChart = new Chart(document.getElementById('completedPieChart'), { type: 'pie', data: { labels: [`Completed (${month}/${year})`], datasets: [{ data: [data.total], backgroundColor: ['#10b981'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } } });
+            });
+        }
+        
         function forceEditable() {
-            document.querySelectorAll('.follower-input').forEach(inp => { inp.disabled = false; inp.style.pointerEvents = 'auto'; inp.style.backgroundColor = 'white'; });
-            document.querySelectorAll('#socialFields input').forEach(inp => { inp.disabled = false; inp.style.pointerEvents = 'auto'; });
-            const yrSel = document.getElementById('followerYearSelect'); if (yrSel) { yrSel.disabled = false; yrSel.style.pointerEvents = 'auto'; }
+            document.querySelectorAll('.follower-input, #socialFields input, #followerYearSelect').forEach(el => { el.disabled = false; el.style.pointerEvents = 'auto'; });
         }
+        window.addEventListener('load', forceEditable);
         const accountsNav = document.querySelector('.nav-item[data-view="accounts"]');
-        if (accountsNav) {
-            accountsNav.addEventListener('click', () => { setTimeout(forceEditable, 200); });
-        }
-        window.addEventListener('load', () => { setTimeout(forceEditable, 500); });
+        if(accountsNav) accountsNav.addEventListener('click', () => setTimeout(forceEditable, 200));
     </script>
 </body>
 </html>
