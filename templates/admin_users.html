@@ -5,37 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Verdisol Agro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url('https://images.unsplash.com/photo-1622383563227-04401ab4e5ea?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .glass-table {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .glass-table th, .glass-table td {
+            background: rgba(255, 255, 255, 0.3);
+            color: black;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .glass-table th {
+            background: rgba(26, 77, 58, 0.7);
+            color: white;
+        }
+        input, select, button {
+            pointer-events: auto !important;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-8">
+<body class="p-8 min-h-screen">
     <div class="max-w-4xl mx-auto">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold">👥 User Management</h1>
-            <a href="/dashboard" class="bg-blue-600 text-white px-4 py-2 rounded">← Back to Dashboard</a>
+            <h1 class="text-2xl font-bold text-white drop-shadow-lg">👥 User Management</h1>
+            <a href="/dashboard" class="bg-[#1a4d3a] text-white px-4 py-2 rounded-lg shadow hover:bg-[#143d2e] transition">← Back to Dashboard</a>
         </div>
         
         {% if request.args.get('error') %}
-            <div class="bg-red-100 text-red-700 p-2 rounded mb-4">{{ request.args.get('error') }}</div>
+            <div class="bg-red-100/80 backdrop-blur-sm text-red-700 p-2 rounded mb-4">{{ request.args.get('error') }}</div>
         {% endif %}
         
-        <div class="bg-white rounded shadow p-6 mb-8">
-            <h2 class="text-lg font-bold mb-4">➕ Add New Member</h2>
+        <!-- Add User Form -->
+        <div class="glass-card p-6 mb-8">
+            <h2 class="text-lg font-bold text-white mb-4">➕ Add New Member</h2>
             <form method="POST" action="/admin/users/add">
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="text" name="username" placeholder="Username" required class="border p-2 rounded">
-                    <input type="email" name="email" placeholder="Email" required class="border p-2 rounded">
-                    <input type="password" name="password" placeholder="Password" required class="border p-2 rounded">
-                    <label class="flex items-center">
-                        <input type="checkbox" name="is_admin" class="mr-2">
+                    <input type="text" name="username" placeholder="Username" required class="border-0 rounded p-2 bg-white/90 focus:bg-white">
+                    <input type="email" name="email" placeholder="Email" required class="border-0 rounded p-2 bg-white/90 focus:bg-white">
+                    <input type="password" name="password" placeholder="Password" required class="border-0 rounded p-2 bg-white/90 focus:bg-white">
+                    <label class="flex items-center text-white">
+                        <input type="checkbox" name="is_admin" class="mr-2 rounded">
                         <span>Admin privileges</span>
                     </label>
                 </div>
-                <button type="submit" class="mt-4 bg-green-600 text-white px-4 py-2 rounded">Create User</button>
+                <button type="submit" class="mt-4 bg-green-700 text-white px-4 py-2 rounded shadow hover:bg-green-800 transition">Create User</button>
             </form>
         </div>
         
-        <div class="bg-white rounded shadow overflow-hidden">
+        <!-- Users Table -->
+        <div class="glass-table overflow-hidden">
             <table class="w-full">
-                <thead class="bg-gray-200">
+                <thead class="bg-[#1a4d3a]/70 text-white">
                     <tr>
                         <th class="p-3 text-left">ID</th>
                         <th class="p-3 text-left">Username</th>
@@ -46,14 +81,14 @@
                 </thead>
                 <tbody>
                     {% for user in users %}
-                    <tr class="border-t">
+                    <tr class="border-b border-white/20">
                         <td class="p-3">{{ user.id }}</td>
                         <td class="p-3">{{ user.username }}</td>
                         <td class="p-3">{{ user.email }}</td>
                         <td class="p-3">{{ 'Yes' if user.is_admin else 'No' }}</td>
                         <td class="p-3">
                             {% if user.id != session.user_id %}
-                            <a href="/admin/users/delete/{{ user.id }}" class="text-red-600 hover:text-red-800" onclick="return confirm('Delete this user?')">Delete</a>
+                            <a href="/admin/users/delete/{{ user.id }}" class="text-red-600 hover:text-red-800 font-semibold" onclick="return confirm('Delete this user?')">Delete</a>
                             {% else %}
                             <span class="text-gray-400">Current</span>
                             {% endif %}
