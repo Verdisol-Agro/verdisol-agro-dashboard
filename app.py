@@ -92,7 +92,6 @@ class FollowerData(db.Model):
 # -------------------------------
 
 def init_demo_data():
-    # Only demo data for non-user tables
     if SocialLink.query.count() == 0:
         platforms = [
             ('twitter', 'https://twitter.com/verdisolagro', 'fab fa-twitter'),
@@ -246,6 +245,26 @@ def logout():
 @login_required
 def dashboard():
     return render_template('dashboard.html')
+
+# -------------------------------
+# TEMPORARY FIX: Make first user admin (visit /make-me-admin once)
+# Remove this route after you see "is now admin"
+# -------------------------------
+@app.route('/make-me-admin')
+def make_me_admin():
+    # Only works if there is at least one user and no admin exists yet
+    admin_exists = User.query.filter_by(is_admin=True).first()
+    if admin_exists:
+        return "An admin already exists. This route is no longer needed."
+    user = User.query.first()
+    if user:
+        user.is_admin = True
+        db.session.commit()
+        # Update session if currently logged in
+        if 'user_id' in session and session['user_id'] == user.id:
+            session['is_admin'] = True
+        return f"✅ User '{user.username}' is now admin. <a href='/admin/users'>Go to Admin Panel</a>"
+    return "No user found. Please create an account via /setup first."
 
 # -------------------------------
 # Admin: User Management
@@ -616,7 +635,7 @@ def completed_sales_by_month():
 # -------------------------------
 
 with app.app_context():
-    db.drop_all()   # Remove this after first successful deploy to keep data
+    db.drop_all()
     db.create_all()
     init_demo_data()
 
