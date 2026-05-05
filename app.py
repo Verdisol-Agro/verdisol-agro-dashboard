@@ -238,7 +238,8 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    user = User.query.get(session['user_id'])
+    return render_template('dashboard.html', user=user)
 
 # -------------------------------
 # Admin: User Management
@@ -322,7 +323,7 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 # -------------------------------
-# API Endpoints
+# API Endpoints (all fetch real sales data)
 # -------------------------------
 
 @app.route('/api/sales', methods=['GET'])
@@ -502,6 +503,7 @@ def mark_survey_done(survey_id):
         return jsonify({'success': True, 'sale_id': sale.id})
     return jsonify({'success': False, 'error': 'Already done'})
 
+# Social links
 @app.route('/api/social_links', methods=['GET', 'POST'])
 @login_required
 def handle_social_links():
@@ -517,7 +519,7 @@ def handle_social_links():
         db.session.commit()
         return jsonify({'success': True})
 
-# Analytics endpoints
+# Analytics endpoints – all fetch from sales
 @app.route('/api/sales_trend')
 @login_required
 def sales_trend():
@@ -601,6 +603,7 @@ def income_expenditure():
         expense_values = [expense_quarter.get(q, 0) for q in all_quarters]
         return jsonify({'labels': all_quarters, 'income': income_values, 'expenditure': expense_values})
 
+# Notifications, summary, histogram, today sales, followers, completed sales by month
 @app.route('/api/notifications')
 @login_required
 def get_notifications():
@@ -718,7 +721,7 @@ def completed_sales_by_month():
     } for s in sales]})
 
 # -------------------------------
-# Daily reminder for upcoming surveys (run when app starts and daily via cron)
+# Daily reminder for upcoming surveys (run on startup)
 # -------------------------------
 def send_survey_reminders():
     tomorrow = date.today() + timedelta(days=1)
@@ -737,7 +740,7 @@ def send_survey_reminders():
             db.session.commit()
 
 # -------------------------------
-# Auto-create admin
+# Auto-create admin from env (if no users)
 # -------------------------------
 def create_admin_from_env():
     if User.query.count() == 0:
@@ -756,7 +759,7 @@ def create_admin_from_env():
 # Create tables and run
 # -------------------------------
 with app.app_context():
-    db.drop_all()      # Comment out after first deploy
+    db.drop_all()      # Comment out after first deploy to keep data
     db.create_all()
     init_demo_data()
     create_admin_from_env()
