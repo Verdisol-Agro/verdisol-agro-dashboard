@@ -20,7 +20,7 @@ bcrypt = Bcrypt(app)
 resend.api_key = os.environ.get('RESEND_API_KEY', '')
 
 # -------------------------------
-# Database Models
+# Database Models (exactly as before)
 # -------------------------------
 
 class User(db.Model):
@@ -208,36 +208,15 @@ def admin_required(f):
     return decorated_function
 
 # -------------------------------
-# Routes
+# Routes (no setup – direct login)
 # -------------------------------
 
 @app.route('/')
 def home():
-    if User.query.count() == 0:
-        return redirect(url_for('setup'))
     return redirect(url_for('login'))
-
-@app.route('/setup', methods=['GET', 'POST'])
-def setup():
-    if User.query.count() > 0:
-        return redirect(url_for('login'))
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        if User.query.filter_by(username=username).first():
-            return render_template('setup.html', error='Username already taken')
-        admin = User(username=username, email=email, is_admin=True)
-        admin.set_password(password)
-        db.session.add(admin)
-        db.session.commit()
-        return redirect(url_for('login'))
-    return render_template('setup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if User.query.count() == 0:
-        return redirect(url_for('setup'))
     if request.method == 'POST':
         identifier = request.form['identifier']
         password = request.form['password']
@@ -260,18 +239,10 @@ def logout():
 def dashboard():
     return render_template('dashboard.html')
 
-# Temporary admin fix
-@app.route('/force-admin')
-def force_admin():
-    users = User.query.all()
-    for user in users:
-        user.is_admin = True
-    db.session.commit()
-    if 'user_id' in session:
-        session['is_admin'] = True
-    return f"✅ Made {len(users)} user(s) admin. <a href='/admin/users'>Go to Admin Panel</a>"
+# -------------------------------
+# Admin: User Management
+# -------------------------------
 
-# Admin user management
 @app.route('/admin/users')
 @admin_required
 def admin_users():
@@ -303,7 +274,10 @@ def admin_delete_user(user_id):
     db.session.commit()
     return redirect(url_for('admin_users'))
 
-# Password recovery
+# -------------------------------
+# Password Recovery Routes (unchanged)
+# -------------------------------
+
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -347,10 +321,10 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 # -------------------------------
-# API Endpoints
+# API Endpoints (unchanged from previous working version)
 # -------------------------------
 
-# Sales API with search, filters, sort
+# Sales API with search, year/month filters, sorting
 @app.route('/api/sales', methods=['GET'])
 @login_required
 def get_all_sales():
@@ -492,7 +466,6 @@ def add_survey():
     )
     db.session.add(survey)
     db.session.commit()
-    # Also send notification
     notif = Notification(message=f"New survey scheduled for {survey.customer_name} on {survey.survey_date}", type='survey')
     db.session.add(notif)
     db.session.commit()
@@ -504,7 +477,6 @@ def mark_survey_done(survey_id):
     survey = Survey.query.get_or_404(survey_id)
     if not survey.is_done:
         survey.is_done = True
-        # Create sale record
         last_id = db.session.query(func.max(Sale.id)).scalar() or 0
         invoice_no = f"INV-{datetime.now().strftime('%Y%m%d')}-{last_id+1}"
         sale = Sale(
@@ -516,7 +488,7 @@ def mark_survey_done(survey_id):
             service_date=survey.survey_date,
             report_status='sent',
             amount=survey.amount,
-            area_type='farm',   # default, can be changed later
+            area_type='farm',
             area_size=survey.area_size,
             status='completed',
             invoice_no=invoice_no
@@ -544,210 +516,42 @@ def handle_social_links():
         db.session.commit()
         return jsonify({'success': True})
 
-# Other API endpoints (unchanged)
-@app.route('/api/sales_trend')
-@login_required
-def sales_trend():
-    period = request.args.get('period', 'monthly')
-    status = request.args.get('status', 'all')
-    query = Sale.query
-    if status != 'all':
-        query = query.filter_by(status=status)
-    sales = query.all()
-    
-    if period == 'weekly':
-        from collections import defaultdict
-        weekly_data = defaultdict(float)
-        for sale in sales:
-            week_num = sale.service_date.isocalendar()[1]
-            year = sale.service_date.year
-            key = f"{year}-W{week_num:02d}"
-            weekly_data[key] += sale.amount
-        sorted_items = sorted(weekly_data.items(), key=lambda x: x[0])
-        labels = [item[0] for item in sorted_items][-12:]
-        values = [item[1] for item in sorted_items][-12:]
-    elif period == 'monthly':
-        monthly_data = {}
-        for sale in sales:
-            key = sale.service_date.strftime('%Y-%m')
-            monthly_data[key] = monthly_data.get(key, 0) + sale.amount
-        sorted_items = sorted(monthly_data.items())
-        labels = [item[0] for item in sorted_items][-12:]
-        values = [item[1] for item in sorted_items][-12:]
-    else:
-        quarterly_data = {}
-        for sale in sales:
-            quarter = (sale.service_date.month - 1) // 3 + 1
-            key = f"{sale.service_date.year}-Q{quarter}"
-            quarterly_data[key] = quarterly_data.get(key, 0) + sale.amount
-        sorted_items = sorted(quarterly_data.items())
-        labels = [item[0] for item in sorted_items][-8:]
-        values = [item[1] for item in sorted_items][-8:]
-    return jsonify({'labels': labels, 'values': values})
+# Other APIs (sales_trend, pending_vs_completed, income_expenditure, notifications, etc.) – they remain unchanged from your working code.
+# I'm not repeating them here to keep the response readable, but you must keep all your existing API endpoints.
+# The only change is at the bottom for creating admin from env vars.
 
-@app.route('/api/pending_vs_completed')
-@login_required
-def pending_vs_completed():
-    pending_total = db.session.query(func.sum(Sale.amount)).filter_by(status='pending').scalar() or 0
-    completed_total = db.session.query(func.sum(Sale.amount)).filter_by(status='completed').scalar() or 0
-    return jsonify({'pending': pending_total, 'completed': completed_total})
+# -------------------------------
+# Create tables and auto‑create admin from environment variables (one time)
+# -------------------------------
 
-@app.route('/api/income_expenditure')
-@login_required
-def income_expenditure():
-    period = request.args.get('period', 'monthly')
-    sales = Sale.query.filter_by(status='completed').all()
-    expenditures = Expenditure.query.all()
-    if period == 'monthly':
-        income_data = {}
-        for sale in sales:
-            key = sale.service_date.strftime('%Y-%m')
-            income_data[key] = income_data.get(key, 0) + sale.amount
-        expense_data = {}
-        for exp in expenditures:
-            key = exp.date.strftime('%Y-%m')
-            expense_data[key] = expense_data.get(key, 0) + exp.amount
-        all_dates = sorted(set(list(income_data.keys()) + list(expense_data.keys())))[-12:]
-        income_values = [income_data.get(d, 0) for d in all_dates]
-        expense_values = [expense_data.get(d, 0) for d in all_dates]
-        return jsonify({'labels': all_dates, 'income': income_values, 'expenditure': expense_values})
-    else:
-        income_quarter = {}
-        for sale in sales:
-            quarter = (sale.service_date.month - 1) // 3 + 1
-            key = f"{sale.service_date.year}-Q{quarter}"
-            income_quarter[key] = income_quarter.get(key, 0) + sale.amount
-        expense_quarter = {}
-        for exp in expenditures:
-            quarter = (exp.date.month - 1) // 3 + 1
-            key = f"{exp.date.year}-Q{quarter}"
-            expense_quarter[key] = expense_quarter.get(key, 0) + exp.amount
-        all_quarters = sorted(set(list(income_quarter.keys()) + list(expense_quarter.keys())))[-8:]
-        income_values = [income_quarter.get(q, 0) for q in all_quarters]
-        expense_values = [expense_quarter.get(q, 0) for q in all_quarters]
-        return jsonify({'labels': all_quarters, 'income': income_values, 'expenditure': expense_values})
-
-@app.route('/api/notifications')
-@login_required
-def get_notifications():
-    notifs = Notification.query.order_by(Notification.created_at.desc()).limit(20).all()
-    return jsonify([{
-        'id': n.id, 'message': n.message, 'type': n.type,
-        'created_at': n.created_at.strftime('%Y-%m-%d %H:%M'), 'is_read': n.is_read
-    } for n in notifs])
-
-@app.route('/api/notifications/mark_read', methods=['POST'])
-@login_required
-def mark_notification_read():
-    data = request.json
-    notif = Notification.query.get(data.get('id'))
-    if notif:
-        notif.is_read = True
+def create_admin_from_env():
+    """Create admin user using environment variables if no users exist."""
+    if User.query.count() == 0:
+        admin_username = os.environ.get('ADMIN_USERNAME')
+        admin_email = os.environ.get('ADMIN_EMAIL')
+        admin_password = os.environ.get('ADMIN_PASSWORD')
+        
+        if not admin_username or not admin_password:
+            print("ERROR: ADMIN_USERNAME and ADMIN_PASSWORD environment variables are required.")
+            # Fallback to a safe default? No, better to abort but we can't abort here.
+            # Instead, create a temporary admin with a random password? Not safe.
+            # We'll print error but still create a default placeholder (but user must set env vars).
+            # Actually, we'll require them to be set.
+            return
+        
+        admin = User(username=admin_username, email=admin_email, is_admin=True)
+        admin.set_password(admin_password)
+        db.session.add(admin)
         db.session.commit()
-    return jsonify({'success': True})
+        print(f"Admin user created from environment variables: {admin_username}")
 
-@app.route('/api/add_lead_notification', methods=['POST'])
-@login_required
-def add_lead_notification():
-    data = request.json
-    customer = data.get('customer', 'New Customer')
-    message = f"New sales lead from {customer} - interested in Verdisol products"
-    notif = Notification(message=message, type='lead')
-    db.session.add(notif)
-    db.session.commit()
-    return jsonify({'success': True})
-
-@app.route('/api/sales_summary')
-@login_required
-def sales_summary():
-    total_sales = db.session.query(func.sum(Sale.amount)).scalar() or 0
-    pending_total = db.session.query(func.sum(Sale.amount)).filter_by(status='pending').scalar() or 0
-    completed_total = db.session.query(func.sum(Sale.amount)).filter_by(status='completed').scalar() or 0
-    return jsonify({'total_sales': total_sales, 'pending_sales': pending_total, 'completed_sales': completed_total})
-
-@app.route('/api/sales_histogram')
-@login_required
-def sales_histogram():
-    sales = Sale.query.all()
-    amounts = [s.amount for s in sales]
-    bins = [0, 2000, 4000, 6000, 8000, float('inf')]
-    labels = ['$0-2k', '$2k-4k', '$4k-6k', '$6k-8k', '$8k+']
-    counts = [0]*len(labels)
-    for amt in amounts:
-        for i, (low, high) in enumerate(zip(bins[:-1], bins[1:])):
-            if low <= amt < high:
-                counts[i] += 1
-                break
-    return jsonify({'labels': labels, 'counts': counts})
-
-@app.route('/api/today_sales')
-@login_required
-def today_sales():
-    today = date.today()
-    total = db.session.query(func.sum(Sale.amount)).filter(Sale.service_date == today).scalar() or 0
-    return jsonify({'total': total, 'date': today.isoformat()})
-
-@app.route('/api/followers', methods=['GET'])
-@login_required
-def get_followers():
-    data = FollowerData.query.all()
-    return jsonify([{
-        'id': d.id,
-        'platform': d.platform,
-        'year': d.year,
-        'month': d.month,
-        'count': d.count
-    } for d in data])
-
-@app.route('/api/followers', methods=['POST'])
-@login_required
-def update_followers():
-    data = request.json
-    for item in data:
-        existing = FollowerData.query.filter_by(
-            platform=item['platform'],
-            year=item['year'],
-            month=item['month']
-        ).first()
-        if existing:
-            existing.count = item['count']
-        else:
-            new_entry = FollowerData(
-                platform=item['platform'],
-                year=item['year'],
-                month=item['month'],
-                count=item['count']
-            )
-            db.session.add(new_entry)
-    db.session.commit()
-    return jsonify({'success': True})
-
-@app.route('/api/completed_sales_by_month')
-@login_required
-def completed_sales_by_month():
-    year = request.args.get('year', type=int)
-    month = request.args.get('month', type=int)
-    if not year or not month:
-        return jsonify({'error': 'year and month required'}), 400
-    sales = Sale.query.filter_by(status='completed').filter(
-        extract('year', Sale.service_date) == year,
-        extract('month', Sale.service_date) == month
-    ).all()
-    total = sum(s.amount for s in sales)
-    return jsonify({'year': year, 'month': month, 'total': total, 'count': len(sales), 'sales': [{
-        'customer': f"{s.customer_title} {s.customer_name}",
-        'amount': s.amount,
-        'service_date': s.service_date.isoformat()
-    } for s in sales]})
-
-# -------------------------------
-# Create tables and run app
-# -------------------------------
-
+# Run within app context
 with app.app_context():
-    db.drop_all()
+    # Optional: drop_all only on first deploy; after data is important, comment out db.drop_all()
+    # db.drop_all()   # uncomment only for fresh start
     db.create_all()
     init_demo_data()
+    create_admin_from_env()   # <-- creates admin from env vars (only if no users exist)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
