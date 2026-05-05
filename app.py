@@ -247,24 +247,19 @@ def dashboard():
     return render_template('dashboard.html')
 
 # -------------------------------
-# TEMPORARY FIX: Make first user admin (visit /make-me-admin once)
-# Remove this route after you see "is now admin"
+# Temporary admin fix – remove after use
 # -------------------------------
-@app.route('/make-me-admin')
-def make_me_admin():
-    # Only works if there is at least one user and no admin exists yet
-    admin_exists = User.query.filter_by(is_admin=True).first()
-    if admin_exists:
-        return "An admin already exists. This route is no longer needed."
-    user = User.query.first()
-    if user:
+@app.route('/force-admin')
+def force_admin():
+    users = User.query.all()
+    if not users:
+        return "No users found. Please create an account via /setup first."
+    for user in users:
         user.is_admin = True
-        db.session.commit()
-        # Update session if currently logged in
-        if 'user_id' in session and session['user_id'] == user.id:
-            session['is_admin'] = True
-        return f"✅ User '{user.username}' is now admin. <a href='/admin/users'>Go to Admin Panel</a>"
-    return "No user found. Please create an account via /setup first."
+    db.session.commit()
+    if 'user_id' in session:
+        session['is_admin'] = True
+    return f"✅ Made {len(users)} user(s) admin. <a href='/admin/users'>Go to Admin Panel</a>"
 
 # -------------------------------
 # Admin: User Management
@@ -348,8 +343,62 @@ def reset_password(token):
     return render_template('reset_password.html', token=token)
 
 # -------------------------------
-# API Endpoints (all your existing ones)
+# API Endpoints
 # -------------------------------
+
+# UPDATED: /api/sales with search, year/month filters, sorting
+@app.route('/api/sales', methods=['GET'])
+@login_required
+def get_all_sales():
+    search = request.args.get('search', '')
+    year = request.args.get('year', type=int)
+    month = request.args.get('month', type=int)
+    sort = request.args.get('sort', 'date_desc')
+    
+    query = Sale.query
+    
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            db.or_(
+                Sale.customer_name.ilike(search_term),
+                Sale.service.ilike(search_term),
+                Sale.area_type.ilike(search_term),
+                db.cast(Sale.area_size, db.String).ilike(search_term)
+            )
+        )
+    
+    if year:
+        query = query.filter(extract('year', Sale.service_date) == year)
+    
+    if month:
+        query = query.filter(extract('month', Sale.service_date) == month)
+    
+    if sort == 'date_asc':
+        query = query.order_by(Sale.service_date.asc())
+    elif sort == 'date_desc':
+        query = query.order_by(Sale.service_date.desc())
+    elif sort == 'amount_asc':
+        query = query.order_by(Sale.amount.asc())
+    elif sort == 'amount_desc':
+        query = query.order_by(Sale.amount.desc())
+    else:
+        query = query.order_by(Sale.service_date.desc())
+    
+    sales = query.all()
+    return jsonify([{
+        'id': s.id,
+        'customer_title': s.customer_title,
+        'customer_name': s.customer_name,
+        'service': s.service,
+        'service_date': s.service_date.isoformat(),
+        'report_status': s.report_status,
+        'amount': s.amount,
+        'area_type': s.area_type,
+        'area_size': s.area_size,
+        'status': s.status,
+        'invoice_no': s.invoice_no
+    } for s in sales])
 
 @app.route('/api/social_links', methods=['GET', 'POST'])
 @login_required
@@ -365,24 +414,6 @@ def handle_social_links():
                 link.url = item['url']
         db.session.commit()
         return jsonify({'success': True})
-
-@app.route('/api/sales', methods=['GET'])
-@login_required
-def get_all_sales():
-    sales = Sale.query.order_by(Sale.service_date.desc()).all()
-    return jsonify([{
-        'id': s.id,
-        'customer_title': s.customer_title,
-        'customer_name': s.customer_name,
-        'service': s.service,
-        'service_date': s.service_date.isoformat(),
-        'report_status': s.report_status,
-        'amount': s.amount,
-        'area_type': s.area_type,
-        'area_size': s.area_size,
-        'status': s.status,
-        'invoice_no': s.invoice_no
-    } for s in sales])
 
 @app.route('/api/sales', methods=['POST'])
 @login_required
@@ -631,7 +662,7 @@ def completed_sales_by_month():
     } for s in sales]})
 
 # -------------------------------
-# Create tables and run app
+# Create tables and run app (resets database – remove db.drop_all() later)
 # -------------------------------
 
 with app.app_context():
