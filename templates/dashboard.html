@@ -305,7 +305,7 @@
         let followerData = [];
         let currentFollowerYear = new Date().getFullYear();
 
-        // Helper functions (clock, today sales)
+        // Helper functions
         function updateClock() { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString(); }
         setInterval(updateClock, 1000); updateClock();
 
@@ -345,7 +345,7 @@
             }
         });
 
-        // Dashboard data
+        // Dashboard data (real sales summary + notifications)
         async function loadDashboardData() {
             try {
                 const summaryRes = await fetch('/api/sales_summary');
@@ -415,7 +415,7 @@
         const lineChartOptions = { ...chartOptions, elements: { line: { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 2 }, point: { backgroundColor: 'white', borderColor: 'white' } } };
         const barChartOptions = { ...chartOptions, elements: { bar: { backgroundColor: 'rgba(255,255,255,0.7)', borderColor: 'white', borderWidth: 1 } } };
 
-        // Analytics functions (defined below)
+        // ANALYTICS (fetches real data from sales records)
         async function loadAnalytics(period) {
             try {
                 const trendRes = await fetch(`/api/sales_trend?period=${period}&status=all`);
@@ -440,6 +440,7 @@
             } catch(e) { console.error(e); }
         }
 
+        // PENDING SALES ANALYSIS (real data)
         async function loadPendingData() {
             try {
                 const res = await fetch('/api/pending_vs_completed');
@@ -453,6 +454,7 @@
             } catch(e) { console.error(e); }
         }
 
+        // COMPLETED SALES ANALYSIS (real data)
         async function loadCompletedData() {
             try {
                 const res = await fetch('/api/pending_vs_completed');
@@ -466,6 +468,7 @@
             } catch(e) { console.error(e); }
         }
 
+        // INCOME & EXPENDITURE (real data)
         async function loadIncomeExpenseData(period) {
             try {
                 const res = await fetch(`/api/income_expenditure?period=${period}`);
@@ -475,7 +478,7 @@
             } catch(e) { console.error(e); }
         }
 
-        // Sales table with filters
+        // Sales table with filters (fetches real sales)
         async function loadSalesTable() {
             try {
                 const search = document.getElementById('searchInput')?.value || '';
@@ -545,7 +548,7 @@
         }
         populateYearDropdowns();
 
-        // Social links & followers (abbreviated but complete)
+        // Social links & followers (unchanged but functional)
         async function loadSocialLinks() { const res = await fetch('/api/social_links'); const links = await res.json(); document.getElementById('socialFields').innerHTML = links.map(l => `<div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg"><i class="${l.icon} text-xl w-6"></i><input type="url" class="flex-1 p-1 border rounded" value="${l.url}" data-platform="${l.platform}"></div>`).join(''); }
         document.getElementById('socialForm')?.addEventListener('submit', async (e) => { e.preventDefault(); const inputs = document.querySelectorAll('#socialFields input'); const updates = Array.from(inputs).map(i => ({ platform: i.dataset.platform, url: i.value })); await fetch('/api/social_links', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updates) }); alert('Social links updated!'); });
         async function loadFollowerData() { const res = await fetch('/api/followers'); followerData = await res.json(); }
@@ -562,7 +565,7 @@
         document.getElementById('addLeadBtn')?.addEventListener('click',async()=>{const cust=prompt('Lead customer name:');if(cust) await fetch('/api/add_lead_notification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer:cust})});loadNotifications();});
         document.addEventListener('click',(e)=>{if(!document.getElementById('notificationBtn')?.contains(e.target)&&!document.getElementById('notificationDropdown')?.contains(e.target)) document.getElementById('notificationDropdown')?.classList.add('hidden'); if(e.target===overlay) closeSidebar(); });
 
-        // Export
+        // Export (uses current filtered sales)
         function getTableData() { return allSales.map(s=>({"Customer":`${s.customer_title} ${s.customer_name}`,"Phone":s.customer_phone,"Location":s.customer_location,"Service":s.service,"Date":s.service_date,"Status":s.report_status,"Amount ($)":s.amount,"Area Type":s.area_type,"Area Size":s.area_size})); }
         document.getElementById('exportCSVBtn')?.addEventListener('click',()=>{const data=getTableData(); const headers=Object.keys(data[0]); const csvRows=[headers.join(',')]; for(const row of data){ const values=headers.map(header=>`"${row[header]}"`); csvRows.push(values.join(',')); } const blob=new Blob([csvRows.join('\n')],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`verdisol_sales_${new Date().toISOString().slice(0,19)}.csv`; a.click(); URL.revokeObjectURL(url); });
         document.getElementById('exportExcelBtn')?.addEventListener('click',()=>{const data=getTableData(); const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"SalesRecords"); XLSX.writeFile(wb,`verdisol_sales_${new Date().toISOString().slice(0,19)}.xlsx`); });
@@ -618,7 +621,7 @@
         fixPeriodButtons();
         const analyticsNav=document.querySelector('.nav-item[data-view="analytics"]'); if(analyticsNav) analyticsNav.addEventListener('click',()=>setTimeout(fixPeriodButtons,100));
         
-        // Completed sales loader
+        // Completed sales loader (by month/year)
         const completedYearSelect = document.getElementById('completedYearSelect');
         if(completedYearSelect) {
             document.getElementById('loadCompletedSalesBtn')?.addEventListener('click', async () => {
