@@ -58,6 +58,8 @@ class Sale(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_title = db.Column(db.String(10), nullable=False, default='Mr')
     customer_name = db.Column(db.String(100), nullable=False)
+    customer_phone = db.Column(db.String(20), nullable=True)
+    customer_location = db.Column(db.String(200), nullable=True)
     service = db.Column(db.String(200), nullable=False)
     service_date = db.Column(db.Date, nullable=False)
     report_status = db.Column(db.String(20), nullable=False, default='pending')
@@ -66,7 +68,19 @@ class Sale(db.Model):
     area_size = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), nullable=False, default='completed')
     invoice_no = db.Column(db.String(50), unique=True, nullable=True)
-    
+
+class Survey(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    customer_name = db.Column(db.String(100), nullable=False)
+    customer_phone = db.Column(db.String(20), nullable=False)
+    customer_location = db.Column(db.String(200), nullable=False)
+    service = db.Column(db.String(200), nullable=False)
+    survey_date = db.Column(db.Date, nullable=False)
+    area_size = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    is_done = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
 class Expenditure(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Float, nullable=False)
@@ -246,14 +260,10 @@ def logout():
 def dashboard():
     return render_template('dashboard.html')
 
-# -------------------------------
-# Temporary admin fix – remove after use
-# -------------------------------
+# Temporary admin fix
 @app.route('/force-admin')
 def force_admin():
     users = User.query.all()
-    if not users:
-        return "No users found. Please create an account via /setup first."
     for user in users:
         user.is_admin = True
     db.session.commit()
@@ -261,10 +271,7 @@ def force_admin():
         session['is_admin'] = True
     return f"✅ Made {len(users)} user(s) admin. <a href='/admin/users'>Go to Admin Panel</a>"
 
-# -------------------------------
-# Admin: User Management
-# -------------------------------
-
+# Admin user management
 @app.route('/admin/users')
 @admin_required
 def admin_users():
@@ -296,10 +303,7 @@ def admin_delete_user(user_id):
     db.session.commit()
     return redirect(url_for('admin_users'))
 
-# -------------------------------
-# Password Recovery
-# -------------------------------
-
+# Password recovery
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
@@ -346,7 +350,7 @@ def reset_password(token):
 # API Endpoints
 # -------------------------------
 
-# UPDATED: /api/sales with search, year/month filters, sorting
+# Sales API with search, filters, sort
 @app.route('/api/sales', methods=['GET'])
 @login_required
 def get_all_sales():
@@ -362,15 +366,15 @@ def get_all_sales():
         query = query.filter(
             db.or_(
                 Sale.customer_name.ilike(search_term),
+                Sale.customer_phone.ilike(search_term),
+                Sale.customer_location.ilike(search_term),
                 Sale.service.ilike(search_term),
-                Sale.area_type.ilike(search_term),
                 db.cast(Sale.area_size, db.String).ilike(search_term)
             )
         )
     
     if year:
         query = query.filter(extract('year', Sale.service_date) == year)
-    
     if month:
         query = query.filter(extract('month', Sale.service_date) == month)
     
@@ -390,6 +394,8 @@ def get_all_sales():
         'id': s.id,
         'customer_title': s.customer_title,
         'customer_name': s.customer_name,
+        'customer_phone': s.customer_phone,
+        'customer_location': s.customer_location,
         'service': s.service,
         'service_date': s.service_date.isoformat(),
         'report_status': s.report_status,
@@ -399,21 +405,6 @@ def get_all_sales():
         'status': s.status,
         'invoice_no': s.invoice_no
     } for s in sales])
-
-@app.route('/api/social_links', methods=['GET', 'POST'])
-@login_required
-def handle_social_links():
-    if request.method == 'GET':
-        links = SocialLink.query.all()
-        return jsonify([{'platform': l.platform, 'url': l.url, 'icon': l.icon} for l in links])
-    else:
-        data = request.json
-        for item in data:
-            link = SocialLink.query.filter_by(platform=item['platform']).first()
-            if link:
-                link.url = item['url']
-        db.session.commit()
-        return jsonify({'success': True})
 
 @app.route('/api/sales', methods=['POST'])
 @login_required
@@ -425,6 +416,8 @@ def add_sale():
     sale = Sale(
         customer_title=data['customer_title'],
         customer_name=data['customer_name'],
+        customer_phone=data.get('customer_phone', ''),
+        customer_location=data.get('customer_location', ''),
         service=data['service'],
         service_date=datetime.strptime(data['service_date'], '%Y-%m-%d').date(),
         report_status=data['report_status'],
@@ -436,7 +429,7 @@ def add_sale():
     )
     db.session.add(sale)
     db.session.commit()
-    notif = Notification(message=f"New sale added: {sale.customer_title} {sale.customer_name} - {sale.service}", type='sale')
+    notif = Notification(message=f"New sale added: {sale.customer_name} - {sale.service}", type='sale')
     db.session.add(notif)
     db.session.commit()
     return jsonify({'success': True, 'id': sale.id})
@@ -448,6 +441,8 @@ def update_sale(sale_id):
     data = request.json
     sale.customer_title = data['customer_title']
     sale.customer_name = data['customer_name']
+    sale.customer_phone = data.get('customer_phone', '')
+    sale.customer_location = data.get('customer_location', '')
     sale.service = data['service']
     sale.service_date = datetime.strptime(data['service_date'], '%Y-%m-%d').date()
     sale.report_status = data['report_status']
@@ -466,6 +461,90 @@ def delete_sale(sale_id):
     db.session.commit()
     return jsonify({'success': True})
 
+# Surveys
+@app.route('/api/surveys', methods=['GET'])
+@login_required
+def get_surveys():
+    surveys = Survey.query.filter_by(is_done=False).order_by(Survey.survey_date.asc()).all()
+    return jsonify([{
+        'id': s.id,
+        'customer_name': s.customer_name,
+        'customer_phone': s.customer_phone,
+        'customer_location': s.customer_location,
+        'service': s.service,
+        'survey_date': s.survey_date.isoformat(),
+        'area_size': s.area_size,
+        'amount': s.amount
+    } for s in surveys])
+
+@app.route('/api/surveys', methods=['POST'])
+@admin_required
+def add_survey():
+    data = request.json
+    survey = Survey(
+        customer_name=data['customer_name'],
+        customer_phone=data['customer_phone'],
+        customer_location=data['customer_location'],
+        service=data['service'],
+        survey_date=datetime.strptime(data['survey_date'], '%Y-%m-%d').date(),
+        area_size=float(data['area_size']),
+        amount=float(data['amount'])
+    )
+    db.session.add(survey)
+    db.session.commit()
+    # Also send notification
+    notif = Notification(message=f"New survey scheduled for {survey.customer_name} on {survey.survey_date}", type='survey')
+    db.session.add(notif)
+    db.session.commit()
+    return jsonify({'success': True, 'id': survey.id})
+
+@app.route('/api/surveys/mark_done/<int:survey_id>', methods=['POST'])
+@login_required
+def mark_survey_done(survey_id):
+    survey = Survey.query.get_or_404(survey_id)
+    if not survey.is_done:
+        survey.is_done = True
+        # Create sale record
+        last_id = db.session.query(func.max(Sale.id)).scalar() or 0
+        invoice_no = f"INV-{datetime.now().strftime('%Y%m%d')}-{last_id+1}"
+        sale = Sale(
+            customer_title='Mr',
+            customer_name=survey.customer_name,
+            customer_phone=survey.customer_phone,
+            customer_location=survey.customer_location,
+            service=survey.service,
+            service_date=survey.survey_date,
+            report_status='sent',
+            amount=survey.amount,
+            area_type='farm',   # default, can be changed later
+            area_size=survey.area_size,
+            status='completed',
+            invoice_no=invoice_no
+        )
+        db.session.add(sale)
+        notif = Notification(message=f"Survey completed for {survey.customer_name} - added to sales", type='sale')
+        db.session.add(notif)
+        db.session.commit()
+        return jsonify({'success': True, 'sale_id': sale.id})
+    return jsonify({'success': False, 'error': 'Already done'})
+
+# Social links
+@app.route('/api/social_links', methods=['GET', 'POST'])
+@login_required
+def handle_social_links():
+    if request.method == 'GET':
+        links = SocialLink.query.all()
+        return jsonify([{'platform': l.platform, 'url': l.url, 'icon': l.icon} for l in links])
+    else:
+        data = request.json
+        for item in data:
+            link = SocialLink.query.filter_by(platform=item['platform']).first()
+            if link:
+                link.url = item['url']
+        db.session.commit()
+        return jsonify({'success': True})
+
+# Other API endpoints (unchanged)
 @app.route('/api/sales_trend')
 @login_required
 def sales_trend():
@@ -662,7 +741,7 @@ def completed_sales_by_month():
     } for s in sales]})
 
 # -------------------------------
-# Create tables and run app (resets database – remove db.drop_all() later)
+# Create tables and run app
 # -------------------------------
 
 with app.app_context():
@@ -673,5 +752,4 @@ with app.app_context():
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
 
-# For Vercel
 app = app
