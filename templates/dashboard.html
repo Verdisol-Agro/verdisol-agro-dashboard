@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* YOUR EXISTING STYLES (keep as is) */
         * { font-family: 'Arial', 'Inter', sans-serif; }
         body {
             font-size: 0.9rem;
@@ -29,7 +28,6 @@
         .sidebar-open { transform: translateX(0); }
         .notification-badge { animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        
         .chart-card, .table-container, #accountsView .bg-white, .chart-card {
             background: rgba(255, 255, 255, 0.2) !important;
             backdrop-filter: blur(6px);
@@ -129,7 +127,7 @@
     <!-- Sidebar Overlay -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
     
-    <!-- Sidebar Drawer (same as before) -->
+    <!-- Sidebar Drawer -->
     <div id="sidebar" class="fixed top-0 left-0 h-full w-80 shadow-2xl z-40 transform -translate-x-full transition-transform duration-300 ease-in-out">
         <div class="p-5 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
             <div class="flex items-center space-x-3">
@@ -153,7 +151,7 @@
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 bg-gray-50 text-center text-xs text-gray-400">© 2025 Verdisol Agro</div>
     </div>
 
-    <!-- Main Content (keep exactly as before; only the year dropdown population will change) -->
+    <!-- Main Content -->
     <div class="ml-0 transition-all duration-300 flex flex-col min-h-screen">
         <header class="sticky top-0 z-20" style="background-color: #1a4d3a; border-bottom: 3px solid #8B5A2B;">
             <div class="px-4 py-4 flex justify-between items-center flex-wrap gap-3">
@@ -198,7 +196,7 @@
                 <div id="surveysList" class="space-y-3">Loading...</div>
             </div>
 
-            <!-- Sales Records View with filter bar -->
+            <!-- Sales Records View -->
             <div id="recordsView" class="view-content hidden">
                 <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
                     <h1 class="text-2xl font-extrabold">📋 Sales Records</h1>
@@ -225,12 +223,68 @@
                 </div>
             </div>
 
-            <!-- Other views (analytics, pending, completed, income, accounts) – they remain identical to your previous working version -->
-            <div id="analyticsView" class="view-content hidden"><div class="mb-4"><h1 class="text-2xl font-extrabold">📈 Advanced Sales Analytics</h1><p class="text-gray-600 text-sm">Line, bar, pie & histogram charts</p></div><div class="flex flex-wrap gap-3 mb-5"><button class="period-btn active bg-green-600 text-white px-4 py-2 rounded-xl text-sm" data-period="weekly">Weekly</button><button class="period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-period="monthly">Monthly</button><button class="period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-period="quarterly">Quarterly</button></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📉 Sales Trend (Line)</h3><canvas id="lineChart" height="200"></canvas></div><div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📊 Monthly Comparison (Bar)</h3><canvas id="barChart" height="200"></canvas></div><div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">🥧 Pending vs Completed (Pie)</h3><canvas id="pieChart" height="200"></canvas></div><div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📊 Sales Amount Distribution (Histogram)</h3><canvas id="histogramChart" height="200"></canvas></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6"><div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow"><i class="fas fa-chart-simple text-2xl mb-2"></i><p class="text-xs">Total Sales</p><p id="totalSalesAmount" class="text-2xl font-bold">$0</p></div><div class="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-5 text-white shadow"><i class="fas fa-hourglass-half text-2xl mb-2"></i><p class="text-xs">Pending Sales</p><p id="pendingSalesAmount" class="text-2xl font-bold">$0</p></div><div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white shadow"><i class="fas fa-check-circle text-2xl mb-2"></i><p class="text-xs">Completed Sales</p><p id="completedSalesAmount" class="text-2xl font-bold">$0</p></div></div></div>
-            <div id="pendingView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">⏳ Pending Sales Analysis</h1><div class="grid lg:grid-cols-2 gap-5"><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Pending vs Completed</h3><canvas id="pendingPieChart" height="250"></canvas></div><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Pending Sales Trend</h3><canvas id="pendingTrendChart" height="250"></canvas></div></div></div>
-            <div id="completedView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">✅ Completed Sales Insights</h1><div class="flex gap-4 mb-6 bg-white/20 p-4 rounded-xl"><div><label class="block text-white text-sm">Year</label><select id="completedYearSelect" class="bg-white border rounded px-3 py-1"></select></div><div><label class="block text-white text-sm">Month</label><select id="completedMonthSelect" class="bg-white border rounded px-3 py-1"><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></div><button id="loadCompletedSalesBtn" class="bg-green-700 text-white px-4 py-1 rounded mt-5">Load</button></div><div class="grid lg:grid-cols-2 gap-5"><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Sales Distribution</h3><canvas id="completedPieChart" height="250"></canvas></div><div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Completed Sales Trend</h3><canvas id="completedTrendChart" height="250"></canvas></div></div><div class="mt-6 bg-white/20 p-4 rounded-xl text-white"><h3 class="font-bold">Monthly Summary</h3><p id="completedMonthSummary">Select year/month and click Load.</p></div></div>
-            <div id="incomeView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">💰 Financial Overview</h1><div class="flex gap-3 mb-4"><button class="finance-period-btn active bg-purple-600 text-white px-4 py-2 rounded-xl text-sm" data-finance="monthly">Monthly</button><button class="finance-period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-finance="quarterly">Quarterly</button></div><div class="chart-card p-5 shadow"><canvas id="incomeExpenseChart" height="100"></canvas></div></div>
-            <div id="accountsView" class="view-content hidden"><h1 class="text-xl font-extrabold mb-4">🔗 Social Media Handles</h1><div class="social-card"><form id="socialForm" class="space-y-3"><div id="socialFields"></div><button type="submit" class="bg-[#1a4d3a] text-white px-5 py-2 rounded-lg text-sm"><i class="fas fa-save mr-1"></i>Save Changes</button></form></div><div class="mt-8"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-extrabold text-white">📊 Follower Analytics</h2><div><select id="followerYearSelect" class="bg-white/80 border rounded px-2 py-1 text-sm"></select><button id="saveFollowersBtn" class="export-btn ml-2"><i class="fas fa-save"></i> Save</button></div></div><table class="follower-table" id="followerTable"><thead id="followerTableHead"></thead><tbody id="followerTableBody"></tbody></table></div><div class="mt-8"><h2 class="text-xl font-extrabold text-white mb-3">📈 Follower Growth Trend</h2><div class="flex gap-3 mb-4"><select id="chartPlatformSelect" class="bg-white/80 border rounded px-2 py-1"><option value="twitter">Twitter</option><option value="linkedin">LinkedIn</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option></select><select id="chartYearSelect" class="bg-white/80 border rounded px-2 py-1"></select><button id="showTrendBtn" class="export-btn">Show Trend</button></div><div class="chart-card p-4 shadow-md"><canvas id="followerTrendChart" height="200"></canvas></div></div></div>
+            <!-- ANALYTICS VIEW – Fully Functional -->
+            <div id="analyticsView" class="view-content hidden">
+                <div class="mb-4"><h1 class="text-2xl font-extrabold">📈 Advanced Sales Analytics</h1><p class="text-gray-600 text-sm">Line, bar, pie & histogram charts</p></div>
+                <div class="flex flex-wrap gap-3 mb-5">
+                    <button class="period-btn active bg-green-600 text-white px-4 py-2 rounded-xl text-sm" data-period="weekly">Weekly</button>
+                    <button class="period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-period="monthly">Monthly</button>
+                    <button class="period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-period="quarterly">Quarterly</button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📉 Sales Trend (Line)</h3><canvas id="lineChart" height="200"></canvas></div>
+                    <div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📊 Monthly Comparison (Bar)</h3><canvas id="barChart" height="200"></canvas></div>
+                    <div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">🥧 Pending vs Completed (Pie)</h3><canvas id="pieChart" height="200"></canvas></div>
+                    <div class="chart-card p-4 shadow-md"><h3 class="font-bold text-gray-700 mb-2">📊 Sales Amount Distribution (Histogram)</h3><canvas id="histogramChart" height="200"></canvas></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow"><i class="fas fa-chart-simple text-2xl mb-2"></i><p class="text-xs">Total Sales</p><p id="totalSalesAmount" class="text-2xl font-bold">$0</p></div>
+                    <div class="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl p-5 text-white shadow"><i class="fas fa-hourglass-half text-2xl mb-2"></i><p class="text-xs">Pending Sales</p><p id="pendingSalesAmount" class="text-2xl font-bold">$0</p></div>
+                    <div class="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-5 text-white shadow"><i class="fas fa-check-circle text-2xl mb-2"></i><p class="text-xs">Completed Sales</p><p id="completedSalesAmount" class="text-2xl font-bold">$0</p></div>
+                </div>
+            </div>
+
+            <!-- PENDING VIEW -->
+            <div id="pendingView" class="view-content hidden">
+                <h1 class="text-xl font-extrabold mb-4">⏳ Pending Sales Analysis</h1>
+                <div class="grid lg:grid-cols-2 gap-5">
+                    <div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Pending vs Completed</h3><canvas id="pendingPieChart" height="250"></canvas></div>
+                    <div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Pending Sales Trend</h3><canvas id="pendingTrendChart" height="250"></canvas></div>
+                </div>
+            </div>
+
+            <!-- COMPLETED VIEW -->
+            <div id="completedView" class="view-content hidden">
+                <h1 class="text-xl font-extrabold mb-4">✅ Completed Sales Insights</h1>
+                <div class="flex gap-4 mb-6 bg-white/20 p-4 rounded-xl">
+                    <div><label class="block text-white text-sm">Year</label><select id="completedYearSelect" class="bg-white border rounded px-3 py-1"></select></div>
+                    <div><label class="block text-white text-sm">Month</label><select id="completedMonthSelect" class="bg-white border rounded px-3 py-1"><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></div>
+                    <button id="loadCompletedSalesBtn" class="bg-green-700 text-white px-4 py-1 rounded mt-5">Load</button>
+                </div>
+                <div class="grid lg:grid-cols-2 gap-5">
+                    <div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Sales Distribution</h3><canvas id="completedPieChart" height="250"></canvas></div>
+                    <div class="chart-card p-5 shadow"><h3 class="font-bold mb-3">Completed Sales Trend</h3><canvas id="completedTrendChart" height="250"></canvas></div>
+                </div>
+                <div class="mt-6 bg-white/20 p-4 rounded-xl text-white"><h3 class="font-bold">Monthly Summary</h3><p id="completedMonthSummary">Select year/month and click Load.</p></div>
+            </div>
+
+            <!-- INCOME & EXPENDITURE VIEW -->
+            <div id="incomeView" class="view-content hidden">
+                <h1 class="text-xl font-extrabold mb-4">💰 Financial Overview</h1>
+                <div class="flex gap-3 mb-4">
+                    <button class="finance-period-btn active bg-purple-600 text-white px-4 py-2 rounded-xl text-sm" data-finance="monthly">Monthly</button>
+                    <button class="finance-period-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm" data-finance="quarterly">Quarterly</button>
+                </div>
+                <div class="chart-card p-5 shadow"><canvas id="incomeExpenseChart" height="100"></canvas></div>
+            </div>
+
+            <!-- SOCIAL ACCOUNTS VIEW -->
+            <div id="accountsView" class="view-content hidden">
+                <h1 class="text-xl font-extrabold mb-4">🔗 Social Media Handles</h1>
+                <div class="social-card"><form id="socialForm" class="space-y-3"><div id="socialFields"></div><button type="submit" class="bg-[#1a4d3a] text-white px-5 py-2 rounded-lg text-sm"><i class="fas fa-save mr-1"></i>Save Changes</button></form></div>
+                <div class="mt-8"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-extrabold text-white">📊 Follower Analytics</h2><div><select id="followerYearSelect" class="bg-white/80 border rounded px-2 py-1 text-sm"></select><button id="saveFollowersBtn" class="export-btn ml-2"><i class="fas fa-save"></i> Save</button></div></div><table class="follower-table" id="followerTable"><thead id="followerTableHead"></thead><tbody id="followerTableBody"></tbody></table></div>
+                <div class="mt-8"><h2 class="text-xl font-extrabold text-white mb-3">📈 Follower Growth Trend</h2><div class="flex gap-3 mb-4"><select id="chartPlatformSelect" class="bg-white/80 border rounded px-2 py-1"><option value="twitter">Twitter</option><option value="linkedin">LinkedIn</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option></select><select id="chartYearSelect" class="bg-white/80 border rounded px-2 py-1"></select><button id="showTrendBtn" class="export-btn">Show Trend</button></div><div class="chart-card p-4 shadow-md"><canvas id="followerTrendChart" height="200"></canvas></div></div>
+            </div>
         </main>
         <footer class="footer"><div class="logo-text"><i class="fas fa-leaf"></i><span>🌱 Verdisol Agro</span></div><div class="copyright">verdisol@2026</div><div class="tagline">Farming Redefined</div></footer>
     </div>
@@ -242,7 +296,7 @@
     <div id="surveyModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold">Schedule Survey</h2><button id="closeSurveyModal" class="text-gray-500">&times;</button></div><form id="surveyForm"><div class="grid grid-cols-2 gap-3 text-sm"><div><label>Customer Name*</label><input type="text" id="survey_customer_name" required class="w-full border rounded p-1"></div><div><label>Phone*</label><input type="text" id="survey_customer_phone" required class="w-full border rounded p-1"></div><div><label>Location*</label><input type="text" id="survey_customer_location" required class="w-full border rounded p-1"></div><div><label>Service*</label><select id="survey_service" required class="w-full border rounded p-1"><option value="Underground Water Survey">Underground Water Survey</option><option value="Crop Monitoring">Crop Monitoring</option><option value="Fire Hazard Mapping">Fire Hazard Mapping</option><option value="Land-Use Planning">Land-Use Planning</option><option value="Soil Mapping">Soil Mapping</option><option value="Soil Analysis">Soil Analysis</option><option value="Staffing Solutions">Staffing Solutions</option><option value="Crop Advisory">Crop Advisory</option><option value="Crop Praying">Crop Praying</option><option value="Boundary Pegging">Boundary Pegging</option></select></div><div><label>Survey Date*</label><input type="date" id="survey_date" required class="w-full border rounded p-1"></div><div><label>Area Size (acres/ha)*</label><input type="number" step="0.1" id="survey_area_size" required class="w-full border rounded p-1"></div><div><label>Amount ($)*</label><input type="number" step="0.01" id="survey_amount" required class="w-full border rounded p-1"></div></div><div class="flex justify-end space-x-2 mt-4"><button type="button" id="cancelSurveyModal" class="px-4 py-1 border rounded">Cancel</button><button type="submit" class="px-4 py-1 bg-[#1a4d3a] text-white rounded">Schedule</button></div></form></div></div>
 
     <script>
-        // Global variables (same as before)
+        // Global variables
         let lineChart, barChart, pieChart, histogramChart;
         let pendingPieChart, pendingTrendChart, completedPieChart, completedTrendChart, incomeExpenseChart;
         let followerTrendChart;
@@ -251,7 +305,7 @@
         let followerData = [];
         let currentFollowerYear = new Date().getFullYear();
 
-        // Clock & today sales
+        // Helper functions (clock, today sales)
         function updateClock() { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString(); }
         setInterval(updateClock, 1000); updateClock();
 
@@ -264,13 +318,12 @@
         }
         updateTodaySales(); setInterval(updateTodaySales, 10000);
 
-        // Sidebar
+        // Sidebar navigation
         const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('sidebarOverlay'), menuBtn = document.getElementById('menuBtn');
         function openSidebar() { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         function closeSidebar() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); document.body.style.overflow = 'auto'; }
         menuBtn.addEventListener('click', openSidebar); overlay.addEventListener('click', closeSidebar);
 
-        // Navigation (exactly as before)
         document.querySelectorAll('.nav-item').forEach(item => {
             if(item.dataset && item.dataset.view) {
                 item.addEventListener('click', () => {
@@ -294,42 +347,46 @@
 
         // Dashboard data
         async function loadDashboardData() {
-            const summaryRes = await fetch('/api/sales_summary');
-            const summary = await summaryRes.json();
-            document.getElementById('dashTotalSales').innerText = `$${summary.total_sales.toLocaleString()}`;
-            document.getElementById('dashPendingSales').innerText = `$${summary.pending_sales.toLocaleString()}`;
-            document.getElementById('dashCompletedSales').innerText = `$${summary.completed_sales.toLocaleString()}`;
-            const notifRes = await fetch('/api/notifications');
-            const notifs = await notifRes.json();
-            document.getElementById('dashNotifications').innerHTML = notifs.slice(0,10).map(n => `<div class="bg-white/30 p-2 rounded"><p class="text-sm">${n.message}</p><p class="text-xs text-gray-200">${n.created_at}</p></div>`).join('');
+            try {
+                const summaryRes = await fetch('/api/sales_summary');
+                const summary = await summaryRes.json();
+                document.getElementById('dashTotalSales').innerText = `$${summary.total_sales.toLocaleString()}`;
+                document.getElementById('dashPendingSales').innerText = `$${summary.pending_sales.toLocaleString()}`;
+                document.getElementById('dashCompletedSales').innerText = `$${summary.completed_sales.toLocaleString()}`;
+                const notifRes = await fetch('/api/notifications');
+                const notifs = await notifRes.json();
+                document.getElementById('dashNotifications').innerHTML = notifs.slice(0,10).map(n => `<div class="bg-white/30 p-2 rounded"><p class="text-sm">${n.message}</p><p class="text-xs text-gray-200">${n.created_at}</p></div>`).join('');
+            } catch(e) { console.error(e); }
         }
 
         // Surveys
         async function loadSurveys() {
-            const res = await fetch('/api/surveys');
-            const surveys = await res.json();
-            const container = document.getElementById('surveysList');
-            if(surveys.length === 0) { container.innerHTML = '<p class="text-white">No upcoming surveys.</p>'; return; }
-            container.innerHTML = surveys.map(s => `
-                <div class="bg-white/30 p-4 rounded-lg border-l-4 border-yellow-500">
-                    <div class="flex justify-between items-start">
-                        <div><strong>${s.customer_name}</strong> (${s.customer_phone})<br>📍 ${s.customer_location}<br>📅 ${s.survey_date} | 🔧 ${s.service}<br>📐 ${s.area_size} acres | 💰 $${s.amount.toLocaleString()}</div>
-                        <button class="mark-done-btn" data-id="${s.id}"><i class="fas fa-check-circle mr-1"></i>Mark Done</button>
+            try {
+                const res = await fetch('/api/surveys');
+                const surveys = await res.json();
+                const container = document.getElementById('surveysList');
+                if(surveys.length === 0) { container.innerHTML = '<p class="text-white">No upcoming surveys.</p>'; return; }
+                container.innerHTML = surveys.map(s => `
+                    <div class="bg-white/30 p-4 rounded-lg border-l-4 border-yellow-500">
+                        <div class="flex justify-between items-start">
+                            <div><strong>${s.customer_name}</strong> (${s.customer_phone})<br>📍 ${s.customer_location}<br>📅 ${s.survey_date} | 🔧 ${s.service}<br>📐 ${s.area_size} acres | 💰 $${s.amount.toLocaleString()}</div>
+                            <button class="mark-done-btn" data-id="${s.id}"><i class="fas fa-check-circle mr-1"></i>Mark Done</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
-            document.querySelectorAll('.mark-done-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = btn.dataset.id;
-                    const res = await fetch(`/api/surveys/mark_done/${id}`, {method: 'POST'});
-                    const data = await res.json();
-                    if(data.success) { alert('Survey marked done and added to sales!'); loadSurveys(); loadSalesTable(); }
-                    else alert('Error');
+                `).join('');
+                document.querySelectorAll('.mark-done-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const id = btn.dataset.id;
+                        const res = await fetch(`/api/surveys/mark_done/${id}`, {method: 'POST'});
+                        const data = await res.json();
+                        if(data.success) { alert('Survey completed and added to sales!'); loadSurveys(); loadSalesTable(); }
+                        else alert('Error');
+                    });
                 });
-            });
+            } catch(e) { console.error(e); }
         }
 
-        // Add survey modal
+        // Add survey modal events
         const addSurveyBtn = document.getElementById('addSurveyBtn');
         const surveyModal = document.getElementById('surveyModal');
         const closeSurveyModal = document.getElementById('closeSurveyModal');
@@ -350,41 +407,103 @@
             };
             const res = await fetch('/api/surveys', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
             if(res.ok) { alert('Survey scheduled!'); surveyModal.style.display = 'none'; loadSurveys(); }
-            else alert('Error');
+            else alert('Error scheduling survey');
         });
 
-        // Chart base options (unchanged)
+        // Chart base options
         const chartOptions = { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: 'white', font: { weight: 'bold' } } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } }, scales: { x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } } } };
         const lineChartOptions = { ...chartOptions, elements: { line: { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 2 }, point: { backgroundColor: 'white', borderColor: 'white' } } };
         const barChartOptions = { ...chartOptions, elements: { bar: { backgroundColor: 'rgba(255,255,255,0.7)', borderColor: 'white', borderWidth: 1 } } };
 
-        // Analytics functions (placeholders – they exist in your original code – but I'll include minimal versions)
-        async function loadAnalytics(period) { /* your existing code */ }
-        async function loadPendingData() { /* your existing code */ }
-        async function loadCompletedData() { /* your existing code */ }
-        async function loadIncomeExpenseData(period) { /* your existing code */ }
+        // Analytics functions (defined below)
+        async function loadAnalytics(period) {
+            try {
+                const trendRes = await fetch(`/api/sales_trend?period=${period}&status=all`);
+                const trendData = await trendRes.json();
+                if (lineChart) lineChart.destroy();
+                lineChart = new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: trendData.labels, datasets: [{ label: 'Sales ($)', data: trendData.values, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true, tension: 0.3 }] }, options: lineChartOptions });
+                if (barChart) barChart.destroy();
+                barChart = new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: trendData.labels, datasets: [{ label: 'Sales ($)', data: trendData.values, backgroundColor: 'rgba(255,255,255,0.7)', borderRadius: 6 }] }, options: barChartOptions });
+                const pvRes = await fetch('/api/pending_vs_completed');
+                const pvData = await pvRes.json();
+                if (pieChart) pieChart.destroy();
+                pieChart = new Chart(document.getElementById('pieChart'), { type: 'pie', data: { labels: ['Pending', 'Completed'], datasets: [{ data: [pvData.pending, pvData.completed], backgroundColor: ['#f59e0b', '#10b981'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } } });
+                const histRes = await fetch('/api/sales_histogram');
+                const histData = await histRes.json();
+                if (histogramChart) histogramChart.destroy();
+                histogramChart = new Chart(document.getElementById('histogramChart'), { type: 'bar', data: { labels: histData.labels, datasets: [{ label: 'Number of Sales', data: histData.counts, backgroundColor: 'rgba(255,255,255,0.7)' }] }, options: { ...barChartOptions, scales: { y: { beginAtZero: true, stepSize: 1, ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } } } } });
+                const summaryRes = await fetch('/api/sales_summary');
+                const summary = await summaryRes.json();
+                document.getElementById('totalSalesAmount').innerText = `$${summary.total_sales.toLocaleString()}`;
+                document.getElementById('pendingSalesAmount').innerText = `$${summary.pending_sales.toLocaleString()}`;
+                document.getElementById('completedSalesAmount').innerText = `$${summary.completed_sales.toLocaleString()}`;
+            } catch(e) { console.error(e); }
+        }
 
-        // Sales table with filters (updated year range)
+        async function loadPendingData() {
+            try {
+                const res = await fetch('/api/pending_vs_completed');
+                const data = await res.json();
+                if (pendingPieChart) pendingPieChart.destroy();
+                pendingPieChart = new Chart(document.getElementById('pendingPieChart'), { type: 'pie', data: { labels: ['Pending','Completed'], datasets: [{ data: [data.pending,data.completed], backgroundColor: ['#f59e0b','#10b981'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } } });
+                const trend = await fetch('/api/sales_trend?period=monthly&status=pending');
+                const trendData = await trend.json();
+                if (pendingTrendChart) pendingTrendChart.destroy();
+                pendingTrendChart = new Chart(document.getElementById('pendingTrendChart'), { type: 'bar', data: { labels: trendData.labels, datasets: [{ label: 'Pending ($)', data: trendData.values, backgroundColor: 'rgba(255,255,255,0.7)' }] }, options: barChartOptions });
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadCompletedData() {
+            try {
+                const res = await fetch('/api/pending_vs_completed');
+                const data = await res.json();
+                if (completedPieChart) completedPieChart.destroy();
+                completedPieChart = new Chart(document.getElementById('completedPieChart'), { type: 'doughnut', data: { labels: ['Completed','Pending'], datasets: [{ data: [data.completed,data.pending], backgroundColor: ['#10b981','#f59e0b'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `$${ctx.raw.toLocaleString()}` } } } } });
+                const trend = await fetch('/api/sales_trend?period=monthly&status=completed');
+                const trendData = await trend.json();
+                if (completedTrendChart) completedTrendChart.destroy();
+                completedTrendChart = new Chart(document.getElementById('completedTrendChart'), { type: 'line', data: { labels: trendData.labels, datasets: [{ label: 'Completed ($)', data: trendData.values, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true }] }, options: lineChartOptions });
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadIncomeExpenseData(period) {
+            try {
+                const res = await fetch(`/api/income_expenditure?period=${period}`);
+                const data = await res.json();
+                if (incomeExpenseChart) incomeExpenseChart.destroy();
+                incomeExpenseChart = new Chart(document.getElementById('incomeExpenseChart'), { type: 'bar', data: { labels: data.labels, datasets: [{ label: 'Income ($)', data: data.income, backgroundColor: 'rgba(255,255,255,0.7)' }, { label: 'Expenditure ($)', data: data.expenditure, backgroundColor: 'rgba(255,255,255,0.3)' }] }, options: barChartOptions });
+            } catch(e) { console.error(e); }
+        }
+
+        // Sales table with filters
         async function loadSalesTable() {
-            const search = document.getElementById('searchInput')?.value || '';
-            const year = document.getElementById('yearFilter')?.value || '';
-            const month = document.getElementById('monthFilter')?.value || '';
-            const sort = document.getElementById('sortBy')?.value || 'date_desc';
-            let url = `/api/sales?sort=${sort}`;
-            if(search) url += `&search=${encodeURIComponent(search)}`;
-            if(year) url += `&year=${year}`;
-            if(month) url += `&month=${month}`;
-            const res = await fetch(url);
-            allSales = await res.json();
-            const tbody = document.getElementById('salesTableBody');
-            tbody.innerHTML = allSales.map(s => `
-                <tr><td>${s.customer_title} ${s.customer_name}</td><td>${s.customer_phone || ''}</td><td>${s.customer_location || ''}</td>
-                <td>${s.service}</td><td>${s.service_date}</td><td><span class="px-2 py-0.5 rounded-full text-xs ${s.report_status==='sent'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${s.report_status}</span></td>
-                <td>$${s.amount.toLocaleString()}</td><td>${s.area_type}</td><td>${s.area_size}</td>
-                <td><button class="edit-btn text-blue-600 mr-2" data-id="${s.id}"><i class="fas fa-edit"></i></button><button class="delete-btn text-red-600" data-id="${s.id}"><i class="fas fa-trash"></i></button></td></tr>
-            `).join('');
-            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); editSale(btn.dataset.id); }));
-            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { e.stopPropagation(); if(confirm('Delete this sale?')) { await fetch(`/api/sales/${btn.dataset.id}`, {method:'DELETE'}); loadSalesTable(); refreshAllCharts(); } }));
+            try {
+                const search = document.getElementById('searchInput')?.value || '';
+                const year = document.getElementById('yearFilter')?.value || '';
+                const month = document.getElementById('monthFilter')?.value || '';
+                const sort = document.getElementById('sortBy')?.value || 'date_desc';
+                let url = `/api/sales?sort=${sort}`;
+                if(search) url += `&search=${encodeURIComponent(search)}`;
+                if(year) url += `&year=${year}`;
+                if(month) url += `&month=${month}`;
+                const res = await fetch(url);
+                allSales = await res.json();
+                const tbody = document.getElementById('salesTableBody');
+                tbody.innerHTML = allSales.map(s => `
+                    <tr><td class="px-4 py-2">${s.customer_title} ${s.customer_name}</td>
+                    <td class="px-4 py-2">${s.customer_phone || ''}</td>
+                    <td class="px-4 py-2">${s.customer_location || ''}</td>
+                    <td class="px-4 py-2">${s.service}</td>
+                    <td class="px-4 py-2">${s.service_date}</td>
+                    <td class="px-4 py-2"><span class="px-2 py-0.5 rounded-full text-xs ${s.report_status==='sent'?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${s.report_status}</span></td>
+                    <td class="px-4 py-2">$${s.amount.toLocaleString()}</td>
+                    <td class="px-4 py-2">${s.area_type}</td>
+                    <td class="px-4 py-2">${s.area_size}</td>
+                    <td class="px-4 py-2"><button class="edit-btn text-blue-600 mr-2" data-id="${s.id}"><i class="fas fa-edit"></i></button><button class="delete-btn text-red-600" data-id="${s.id}"><i class="fas fa-trash"></i></button></td>
+                `).join('');
+                document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); editSale(btn.dataset.id); }));
+                document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async (e) => { e.stopPropagation(); if(confirm('Delete this sale?')) { await fetch(`/api/sales/${btn.dataset.id}`, {method:'DELETE'}); loadSalesTable(); refreshAllCharts(); } }));
+            } catch(e) { console.error(e); }
         }
         function editSale(id) { const sale = allSales.find(s => s.id == id); if(sale) { document.getElementById('modalTitle').innerText='Edit Sale'; document.getElementById('saleId').value=sale.id; document.getElementById('customer_title').value=sale.customer_title; document.getElementById('customer_name').value=sale.customer_name; document.getElementById('customer_phone').value=sale.customer_phone||''; document.getElementById('customer_location').value=sale.customer_location||''; document.getElementById('service').value=sale.service; document.getElementById('service_date').value=sale.service_date; document.getElementById('report_status').value=sale.report_status; document.getElementById('amount').value=sale.amount; document.getElementById('area_type').value=sale.area_type; document.getElementById('area_size').value=sale.area_size; document.getElementById('saleModal').style.display='flex'; } }
         function refreshAllCharts() { loadAnalytics(currentPeriod); loadPendingData(); loadCompletedData(); loadIncomeExpenseData(currentFinancePeriod); }
@@ -399,7 +518,7 @@
             loadSalesTable();
         });
 
-        // YEAR FILTER: Populate years 2020-2090 (instead of just current ±5)
+        // Populate year dropdowns (2020-2090)
         function populateYearDropdowns() {
             const yearSelect = document.getElementById('yearFilter');
             if(yearSelect) {
@@ -411,7 +530,6 @@
                     yearSelect.appendChild(opt);
                 }
             }
-            // Also populate completed sales year select (same range)
             const completedYearSelect = document.getElementById('completedYearSelect');
             if(completedYearSelect) {
                 completedYearSelect.innerHTML = '';
@@ -427,7 +545,7 @@
         }
         populateYearDropdowns();
 
-        // Social links & followers (same as before – abbreviated)
+        // Social links & followers (abbreviated but complete)
         async function loadSocialLinks() { const res = await fetch('/api/social_links'); const links = await res.json(); document.getElementById('socialFields').innerHTML = links.map(l => `<div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg"><i class="${l.icon} text-xl w-6"></i><input type="url" class="flex-1 p-1 border rounded" value="${l.url}" data-platform="${l.platform}"></div>`).join(''); }
         document.getElementById('socialForm')?.addEventListener('submit', async (e) => { e.preventDefault(); const inputs = document.querySelectorAll('#socialFields input'); const updates = Array.from(inputs).map(i => ({ platform: i.dataset.platform, url: i.value })); await fetch('/api/social_links', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(updates) }); alert('Social links updated!'); });
         async function loadFollowerData() { const res = await fetch('/api/followers'); followerData = await res.json(); }
@@ -476,7 +594,7 @@
             refreshAllCharts();
         });
 
-        // Initial view
+        // Initial load
         document.querySelector('.nav-item[data-view="dashboard"]').classList.add('active-nav');
         loadDashboardData();
         loadSalesTable();
@@ -514,9 +632,7 @@
             });
         }
         
-        function forceEditable() {
-            document.querySelectorAll('.follower-input, #socialFields input, #followerYearSelect, select, input, button').forEach(el => { el.disabled = false; el.style.pointerEvents = 'auto'; });
-        }
+        function forceEditable() { document.querySelectorAll('.follower-input, #socialFields input, #followerYearSelect, select, input, button').forEach(el => { el.disabled = false; el.style.pointerEvents = 'auto'; }); }
         window.addEventListener('load', forceEditable);
         const accountsNav=document.querySelector('.nav-item[data-view="accounts"]'); if(accountsNav) accountsNav.addEventListener('click',()=>setTimeout(forceEditable,200));
     </script>
