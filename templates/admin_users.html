@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Verdisol Agro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">👥 User Management</h1>
+            <a href="/dashboard" class="bg-blue-600 text-white px-4 py-2 rounded">← Back to Dashboard</a>
+        </div>
+        
+        <div class="bg-white rounded shadow p-6 mb-8">
+            <h2 class="text-lg font-bold mb-4">➕ Add New Member</h2>
+            {% if request.args.get('error') %}
+                <div class="bg-red-100 text-red-700 p-2 rounded mb-4">{{ request.args.get('error') }}</div>
+            {% endif %}
+            <form method="POST" action="/admin/users/add">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" name="username" placeholder="Username" required class="border p-2 rounded">
+                    <input type="email" name="email" placeholder="Email" required class="border p-2 rounded">
+                    <input type="password" name="password" placeholder="Password" required class="border p-2 rounded">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="is_admin" class="mr-2">
+                        <span>Admin privileges</span>
+                    </label>
+                </div>
+                <button type="submit" class="mt-4 bg-green-600 text-white px-4 py-2 rounded">Create User</button>
+            </form>
+        </div>
+        
+        <div class="bg-white rounded shadow overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-200">
+                    <tr>
+                        <th class="p-3 text-left">ID</th>
+                        <th class="p-3 text-left">Username</th>
+                        <th class="p-3 text-left">Email</th>
+                        <th class="p-3 text-left">Admin</th>
+                        <th class="p-3 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="border-t">
+                        <td class="p-3">{{ user.id }}</td>
+                        <td class="p-3">{{ user.username }}</td>
+                        <td class="p-3">{{ user.email }}</td>
+                        <td class="p-3">{{ 'Yes' if user.is_admin else 'No' }}</td>
+                        <td class="p-3">
+                            {% if user.id != session.user_id %}
+                            <a href="/admin/users/delete/{{ user.id }}" class="text-red-600 hover:text-red-800" onclick="return confirm('Delete this user?')">Delete</a>
+                            {% else %}
+                            <span class="text-gray-400">Current</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
