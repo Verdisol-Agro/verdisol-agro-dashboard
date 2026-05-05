@@ -107,7 +107,6 @@
         .mark-done-btn { background: #10b981; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.75rem; }
         .mark-done-btn:hover { background: #059669; }
         
-        /* FORCE ALL CONTROLS TO BE CLICKABLE AND EDITABLE */
         select, input, button, .follower-input, #socialFields input, 
         .period-btn, .finance-period-btn, .nav-item, .export-btn, 
         #addRecordBtn, .edit-btn, .delete-btn, .mark-done-btn,
@@ -278,58 +277,12 @@
                 <div class="chart-card p-5 shadow"><canvas id="incomeExpenseChart" height="100"></canvas></div>
             </div>
 
-            <!-- SOCIAL ACCOUNTS VIEW (Editable Handles + Follower Table + Trend Chart) -->
+            <!-- SOCIAL ACCOUNTS VIEW -->
             <div id="accountsView" class="view-content hidden">
                 <h1 class="text-xl font-extrabold mb-4">🔗 Social Media Handles</h1>
-                <div class="social-card">
-                    <form id="socialForm" class="space-y-3">
-                        <div id="socialFields"></div>
-                        <button type="submit" class="bg-[#1a4d3a] text-white px-5 py-2 rounded-lg text-sm"><i class="fas fa-save mr-1"></i>Save Changes</button>
-                    </form>
-                </div>
-                
-                <!-- FOLLOWER ANALYTICS - Editable table per year -->
-                <div class="mt-8">
-                    <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
-                        <h2 class="text-xl font-extrabold text-white drop-shadow-md">📊 Follower Analytics (Monthly)</h2>
-                        <div class="flex gap-2">
-                            <select id="followerYearSelect" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm"></select>
-                            <button id="saveFollowersBtn" class="export-btn"><i class="fas fa-save mr-1"></i> Save Changes</button>
-                        </div>
-                    </div>
-                    <div class="table-container overflow-x-auto">
-                        <table class="follower-table" id="followerTable">
-                            <thead id="followerTableHead"></thead>
-                            <tbody id="followerTableBody"></tbody>
-                        </table>
-                    </div>
-                    <p class="text-xs text-gray-300 mt-2">Click any number, edit, then click "Save Changes".</p>
-                </div>
-
-                <!-- FOLLOWER TREND CHART -->
-                <div class="mt-8">
-                    <h2 class="text-xl font-extrabold text-white drop-shadow-md mb-3">📈 Follower Growth Trend</h2>
-                    <div class="flex flex-wrap gap-3 items-end mb-4">
-                        <div>
-                            <label class="block text-sm font-medium text-white">Platform</label>
-                            <select id="chartPlatformSelect" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm">
-                                <option value="twitter">Twitter</option>
-                                <option value="linkedin">LinkedIn</option>
-                                <option value="facebook">Facebook</option>
-                                <option value="instagram">Instagram</option>
-                                <option value="whatsapp">WhatsApp</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-white">Year</label>
-                            <select id="chartYearSelect" class="bg-white border border-gray-300 rounded px-2 py-1 text-sm"></select>
-                        </div>
-                        <button id="showTrendBtn" class="export-btn"><i class="fas fa-chart-line mr-1"></i> Show Trend</button>
-                    </div>
-                    <div class="chart-card p-4 shadow-md">
-                        <canvas id="followerTrendChart" height="200"></canvas>
-                    </div>
-                </div>
+                <div class="social-card"><form id="socialForm" class="space-y-3"><div id="socialFields"></div><button type="submit" class="bg-[#1a4d3a] text-white px-5 py-2 rounded-lg text-sm"><i class="fas fa-save mr-1"></i>Save Changes</button></form></div>
+                <div class="mt-8"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-extrabold text-white">📊 Follower Analytics</h2><div><select id="followerYearSelect" class="bg-white border rounded px-2 py-1 text-sm"></select><button id="saveFollowersBtn" class="export-btn ml-2"><i class="fas fa-save"></i> Save</button></div></div><table class="follower-table" id="followerTable"><thead id="followerTableHead"></thead><tbody id="followerTableBody"></tbody></table></div>
+                <div class="mt-8"><h2 class="text-xl font-extrabold text-white mb-3">📈 Follower Growth Trend</h2><div class="flex gap-3 mb-4"><select id="chartPlatformSelect" class="bg-white border rounded px-2 py-1"><option value="twitter">Twitter</option><option value="linkedin">LinkedIn</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option></select><select id="chartYearSelect" class="bg-white border rounded px-2 py-1"></select><button id="showTrendBtn" class="export-btn">Show Trend</button></div><div class="chart-card p-4 shadow-md"><canvas id="followerTrendChart" height="200"></canvas></div></div>
             </div>
         </main>
         <footer class="footer"><div class="logo-text"><i class="fas fa-leaf"></i><span>🌱 Verdisol Agro</span></div><div class="copyright">verdisol@2026</div><div class="tagline">Farming Redefined</div></footer>
@@ -338,8 +291,8 @@
     <!-- MODAL FOR ADD/EDIT SALE -->
     <div id="saleModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 id="modalTitle" class="text-lg font-bold">Add New Sale</h2><button id="closeModal" class="text-gray-500">&times;</button></div><form id="saleForm"><input type="hidden" id="saleId"><div class="grid grid-cols-2 gap-3 text-sm"><div><label>Title</label><select id="customer_title"><option>Mr</option><option>Mrs</option><option>Miss</option><option>Ms</option></select></div><div><label>Customer Name</label><input type="text" id="customer_name" required class="w-full border rounded p-1"></div><div><label>Phone</label><input type="text" id="customer_phone" class="w-full border rounded p-1"></div><div><label>Location</label><input type="text" id="customer_location" class="w-full border rounded p-1"></div><div><label>Service</label><select id="service" required class="w-full border rounded p-1"><option value="Underground Water Survey">Underground Water Survey</option><option value="Crop Monitoring">Crop Monitoring</option><option value="Fire Hazard Mapping">Fire Hazard Mapping</option><option value="Land-Use Planning">Land-Use Planning</option><option value="Soil Mapping">Soil Mapping</option><option value="Soil Analysis">Soil Analysis</option><option value="Staffing Solutions">Staffing Solutions</option><option value="Crop Advisory">Crop Advisory</option><option value="Crop Praying">Crop Praying</option><option value="Boundary Pegging">Boundary Pegging</option></select></div><div><label>Service Date</label><input type="date" id="service_date" required class="w-full border rounded p-1"></div><div><label>Report Status</label><select id="report_status"><option value="pending">Pending</option><option value="sent">Sent</option></select></div><div><label>Amount ($)</label><input type="number" step="0.01" id="amount" required class="w-full border rounded p-1"></div><div><label>Area Type</label><select id="area_type"><option value="residential">Residential</option><option value="farm">Farm</option><option value="plot">Plot</option></select></div><div><label>Area Size (acres/ha)</label><input type="number" step="0.1" id="area_size" required class="w-full border rounded p-1"></div></div><div class="flex justify-end space-x-2 mt-4"><button type="button" id="cancelModal" class="px-4 py-1 border rounded">Cancel</button><button type="submit" class="px-4 py-1 bg-[#1a4d3a] text-white rounded">Save</button></div></form></div></div>
 
-    <!-- MODAL FOR ADD SURVEY -->
-    <div id="surveyModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold">Schedule Survey</h2><button id="closeSurveyModal" class="text-gray-500">&times;</button></div><form id="surveyForm"><div class="grid grid-cols-2 gap-3 text-sm"><div><label>Customer Name*</label><input type="text" id="survey_customer_name" required class="w-full border rounded p-1"></div><div><label>Phone*</label><input type="text" id="survey_customer_phone" required class="w-full border rounded p-1"></div><div><label>Location*</label><input type="text" id="survey_customer_location" required class="w-full border rounded p-1"></div><div><label>Service*</label><select id="survey_service" required class="w-full border rounded p-1"><option value="Underground Water Survey">Underground Water Survey</option><option value="Crop Monitoring">Crop Monitoring</option><option value="Fire Hazard Mapping">Fire Hazard Mapping</option><option value="Land-Use Planning">Land-Use Planning</option><option value="Soil Mapping">Soil Mapping</option><option value="Soil Analysis">Soil Analysis</option><option value="Staffing Solutions">Staffing Solutions</option><option value="Crop Advisory">Crop Advisory</option><option value="Crop Praying">Crop Praying</option><option value="Boundary Pegging">Boundary Pegging</option></select></div><div><label>Survey Date*</label><input type="date" id="survey_date" required class="w-full border rounded p-1"></div><div><label>Area Size (acres/ha)*</label><input type="number" step="0.1" id="survey_area_size" required class="w-full border rounded p-1"></div><div><label>Amount ($)*</label><input type="number" step="0.01" id="survey_amount" required class="w-full border rounded p-1"></div></div><div class="flex justify-end space-x-2 mt-4"><button type="button" id="cancelSurveyModal" class="px-4 py-1 border rounded">Cancel</button><button type="submit" class="px-4 py-1 bg-[#1a4d3a] text-white rounded">Schedule</button></div></form></div></div>
+    <!-- MODAL FOR ADD SURVEY (with land type) -->
+    <div id="surveyModal" class="modal"><div class="modal-content"><div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold">Schedule Survey</h2><button id="closeSurveyModal" class="text-gray-500">&times;</button></div><form id="surveyForm"><div class="grid grid-cols-2 gap-3 text-sm"><div><label>Customer Name*</label><input type="text" id="survey_customer_name" required class="w-full border rounded p-1"></div><div><label>Phone*</label><input type="text" id="survey_customer_phone" required class="w-full border rounded p-1"></div><div><label>Location*</label><input type="text" id="survey_customer_location" required class="w-full border rounded p-1"></div><div><label>Service*</label><select id="survey_service" required class="w-full border rounded p-1"><option value="Underground Water Survey">Underground Water Survey</option><option value="Crop Monitoring">Crop Monitoring</option><option value="Fire Hazard Mapping">Fire Hazard Mapping</option><option value="Land-Use Planning">Land-Use Planning</option><option value="Soil Mapping">Soil Mapping</option><option value="Soil Analysis">Soil Analysis</option><option value="Staffing Solutions">Staffing Solutions</option><option value="Crop Advisory">Crop Advisory</option><option value="Crop Praying">Crop Praying</option><option value="Boundary Pegging">Boundary Pegging</option></select></div><div><label>Land Type*</label><select id="survey_land_type" required class="w-full border rounded p-1"><option value="plot">Plot</option><option value="residential">Residential</option><option value="farm">Farm</option></select></div><div><label>Area Size (acres/ha)*</label><input type="number" step="0.1" id="survey_area_size" required class="w-full border rounded p-1"></div><div><label>Amount ($)*</label><input type="number" step="0.01" id="survey_amount" required class="w-full border rounded p-1"></div><div><label>Survey Date*</label><input type="date" id="survey_date" required class="w-full border rounded p-1"></div></div><div class="flex justify-end space-x-2 mt-4"><button type="button" id="cancelSurveyModal" class="px-4 py-1 border rounded">Cancel</button><button type="submit" class="px-4 py-1 bg-[#1a4d3a] text-white rounded">Schedule</button></div></form></div></div>
 
     <script>
         // Global variables
@@ -351,7 +304,7 @@
         let followerData = [];
         let currentFollowerYear = new Date().getFullYear();
 
-        // Clock and today sales
+        // Clock & today sales
         function updateClock() { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString(); }
         setInterval(updateClock, 1000); updateClock();
 
@@ -370,7 +323,6 @@
         function closeSidebar() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); document.body.style.overflow = 'auto'; }
         menuBtn.addEventListener('click', openSidebar); overlay.addEventListener('click', closeSidebar);
 
-        // Navigation
         document.querySelectorAll('.nav-item').forEach(item => {
             if(item.dataset && item.dataset.view) {
                 item.addEventListener('click', () => {
@@ -416,7 +368,7 @@
                 container.innerHTML = surveys.map(s => `
                     <div class="bg-white/30 p-4 rounded-lg border-l-4 border-yellow-500">
                         <div class="flex justify-between items-start">
-                            <div><strong>${s.customer_name}</strong> (${s.customer_phone})<br>📍 ${s.customer_location}<br>📅 ${s.survey_date} | 🔧 ${s.service}<br>📐 ${s.area_size} acres | 💰 $${s.amount.toLocaleString()}</div>
+                            <div><strong>${s.customer_name}</strong> (${s.customer_phone})<br>📍 ${s.customer_location}<br>📅 ${s.survey_date} | 🔧 ${s.service}<br>📐 ${s.area_size} acres | Land: ${s.land_type}<br>💰 $${s.amount.toLocaleString()}</div>
                             <button class="mark-done-btn" data-id="${s.id}"><i class="fas fa-check-circle mr-1"></i>Mark Done</button>
                         </div>
                     </div>
@@ -448,9 +400,10 @@
                 customer_phone: document.getElementById('survey_customer_phone').value,
                 customer_location: document.getElementById('survey_customer_location').value,
                 service: document.getElementById('survey_service').value,
-                survey_date: document.getElementById('survey_date').value,
+                land_type: document.getElementById('survey_land_type').value,
                 area_size: parseFloat(document.getElementById('survey_area_size').value),
-                amount: parseFloat(document.getElementById('survey_amount').value)
+                amount: parseFloat(document.getElementById('survey_amount').value),
+                survey_date: document.getElementById('survey_date').value
             };
             const res = await fetch('/api/surveys', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
             if(res.ok) { alert('Survey scheduled!'); surveyModal.style.display = 'none'; loadSurveys(); }
@@ -462,7 +415,7 @@
         const lineChartOptions = { ...chartOptions, elements: { line: { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 2 }, point: { backgroundColor: 'white', borderColor: 'white' } } };
         const barChartOptions = { ...chartOptions, elements: { bar: { backgroundColor: 'rgba(255,255,255,0.7)', borderColor: 'white', borderWidth: 1 } } };
 
-        // Analytics functions (all use real data)
+        // Analytics functions
         async function loadAnalytics(period) {
             try {
                 const trendRes = await fetch(`/api/sales_trend?period=${period}&status=all`);
@@ -579,30 +532,23 @@
             const completedYearSelect = document.getElementById('completedYearSelect');
             if(completedYearSelect) {
                 completedYearSelect.innerHTML = '';
-                const currY = new Date().getFullYear();
                 for (let y = 2020; y <= 2090; y++) {
                     let opt = document.createElement('option');
                     opt.value = y;
                     opt.textContent = y;
-                    if (y === currY) opt.selected = true;
+                    if (y === new Date().getFullYear()) opt.selected = true;
                     completedYearSelect.appendChild(opt);
                 }
             }
         }
         populateYearDropdowns();
 
-        // ============= SOCIAL LINKS AND FOLLOWER MANAGEMENT =============
-        // Social links
+        // Social links and follower management
         async function loadSocialLinks() {
             const res = await fetch('/api/social_links');
             const links = await res.json();
             const container = document.getElementById('socialFields');
-            container.innerHTML = links.map(l => `
-                <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
-                    <i class="${l.icon} text-xl w-6"></i>
-                    <input type="url" class="flex-1 p-1 border rounded" value="${l.url}" data-platform="${l.platform}">
-                </div>
-            `).join('');
+            container.innerHTML = links.map(l => `<div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg"><i class="${l.icon} text-xl w-6"></i><input type="url" class="flex-1 p-1 border rounded" value="${l.url}" data-platform="${l.platform}"></div>`).join('');
         }
         document.getElementById('socialForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -612,36 +558,19 @@
             alert(res.ok ? 'Social links updated!' : 'Error');
         });
 
-        // Follower data
-        async function loadFollowerData() {
-            const res = await fetch('/api/followers');
-            followerData = await res.json();
-        }
-
-        // Populate year selectors for followers (2020-2090)
+        async function loadFollowerData() { const res = await fetch('/api/followers'); followerData = await res.json(); }
         function populateYearSelectors() {
             const currentYear = new Date().getFullYear();
             const yearSelect = document.getElementById('followerYearSelect');
             const chartYearSelect = document.getElementById('chartYearSelect');
             if(yearSelect) {
-                yearSelect.innerHTML = '';
-                chartYearSelect.innerHTML = '';
+                yearSelect.innerHTML = ''; chartYearSelect.innerHTML = '';
                 for(let y=2020; y<=2090; y++) {
-                    let opt1 = document.createElement('option');
-                    opt1.value = y;
-                    opt1.textContent = y;
-                    if(y === currentYear) opt1.selected = true;
-                    yearSelect.appendChild(opt1);
-                    let opt2 = document.createElement('option');
-                    opt2.value = y;
-                    opt2.textContent = y;
-                    if(y === currentYear) opt2.selected = true;
-                    chartYearSelect.appendChild(opt2);
+                    let opt1 = document.createElement('option'); opt1.value = y; opt1.textContent = y; if(y===currentYear) opt1.selected = true; yearSelect.appendChild(opt1);
+                    let opt2 = document.createElement('option'); opt2.value = y; opt2.textContent = y; if(y===currentYear) opt2.selected = true; chartYearSelect.appendChild(opt2);
                 }
             }
         }
-
-        // Load follower table for a given year (editable)
         async function loadFollowerTable(year) {
             await loadFollowerData();
             const platforms = ['twitter', 'linkedin', 'facebook', 'instagram', 'whatsapp'];
@@ -651,7 +580,7 @@
             const tbody = document.getElementById('followerTableBody');
             tbody.innerHTML = '';
             for(let platform of platforms) {
-                let row = `<tr><td class="font-bold">${platform.charAt(0).toUpperCase() + platform.slice(1)}</td>`;
+                let row = `<tr><td class="font-bold">${platform.charAt(0).toUpperCase()+platform.slice(1)}</td>`;
                 for(let i=1; i<=12; i++) {
                     const record = followerData.find(f => f.platform === platform && f.year === year && f.month === i);
                     const count = record ? record.count : 0;
@@ -662,8 +591,6 @@
             }
             currentFollowerYear = year;
         }
-
-        // Save follower data
         document.getElementById('saveFollowersBtn')?.addEventListener('click', async () => {
             const inputs = document.querySelectorAll('#followerTableBody .follower-input');
             const updates = [];
@@ -674,17 +601,9 @@
                 updates.push({ platform, year: currentFollowerYear, month, count });
             });
             const res = await fetch('/api/followers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
-            if(res.ok) {
-                alert('Follower data saved!');
-                loadFollowerTable(currentFollowerYear);
-                // Refresh trend chart for the currently selected platform/year
-                const platform = document.getElementById('chartPlatformSelect').value;
-                const year = parseInt(document.getElementById('chartYearSelect').value);
-                if(!isNaN(year)) loadFollowerTrendChart(platform, year);
-            } else alert('Error saving data');
+            if(res.ok) { alert('Follower data saved!'); loadFollowerTable(currentFollowerYear); }
+            else alert('Error saving data');
         });
-
-        // Follower trend chart
         async function loadFollowerTrendChart(platform, year) {
             await loadFollowerData();
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -697,39 +616,12 @@
             const ctx = document.getElementById('followerTrendChart').getContext('2d');
             followerTrendChart = new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [{
-                        label: `${platform.charAt(0).toUpperCase()+platform.slice(1)} Followers (${year})`,
-                        data: monthlyCounts,
-                        borderColor: 'white',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointBackgroundColor: 'white',
-                        pointBorderColor: 'white',
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toLocaleString()} followers` } } },
-                    scales: { x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' }, beginAtZero: true, title: { display: true, text: 'Followers', color: 'white' } } }
-                }
+                data: { labels: months, datasets: [{ label: `${platform.charAt(0).toUpperCase()+platform.slice(1)} Followers (${year})`, data: monthlyCounts, borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.1)', fill: true, tension: 0.3, pointBackgroundColor: 'white', pointBorderColor: 'white', pointRadius: 4 }] },
+                options: { responsive: true, plugins: { legend: { labels: { color: 'white' } }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw.toLocaleString()} followers` } } }, scales: { x: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' } }, y: { ticks: { color: 'white' }, grid: { color: 'rgba(255,255,255,0.2)' }, beginAtZero: true, title: { display: true, text: 'Followers', color: 'white' } } } }
             });
         }
-
-        // Year change for follower table
-        document.getElementById('followerYearSelect')?.addEventListener('change', (e) => {
-            const year = parseInt(e.target.value);
-            if(!isNaN(year)) loadFollowerTable(year);
-        });
-        // Show trend button
-        document.getElementById('showTrendBtn')?.addEventListener('click', () => {
-            const platform = document.getElementById('chartPlatformSelect').value;
-            const year = parseInt(document.getElementById('chartYearSelect').value);
-            if(!isNaN(year)) loadFollowerTrendChart(platform, year);
-        });
+        document.getElementById('followerYearSelect')?.addEventListener('change', (e) => { loadFollowerTable(parseInt(e.target.value)); });
+        document.getElementById('showTrendBtn')?.addEventListener('click', () => { const platform = document.getElementById('chartPlatformSelect').value; const year = parseInt(document.getElementById('chartYearSelect').value); if(!isNaN(year)) loadFollowerTrendChart(platform, year); });
 
         // Notifications
         async function loadNotifications() { const res=await fetch('/api/notifications'); const notifs=await res.json(); document.getElementById('notificationCount').innerText=notifs.filter(n=>!n.is_read).length; const container=document.getElementById('notificationList'); container.innerHTML=notifs.map(n=>`<div class="p-3 hover:bg-gray-50 cursor-pointer ${!n.is_read?'bg-green-50 border-l-4 border-green-500':''}" data-id="${n.id}"><p class="text-sm">${n.message}</p><p class="text-xs text-gray-400">${n.created_at}</p></div>`).join(''); document.querySelectorAll('#notificationList > div').forEach(el=>el.addEventListener('click',async()=>{await fetch('/api/notifications/mark_read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:el.dataset.id})});loadNotifications();})); }
@@ -737,7 +629,7 @@
         document.getElementById('addLeadBtn')?.addEventListener('click',async()=>{const cust=prompt('Lead customer name:');if(cust) await fetch('/api/add_lead_notification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customer:cust})});loadNotifications();});
         document.addEventListener('click',(e)=>{if(!document.getElementById('notificationBtn')?.contains(e.target)&&!document.getElementById('notificationDropdown')?.contains(e.target)) document.getElementById('notificationDropdown')?.classList.add('hidden'); if(e.target===overlay) closeSidebar(); });
 
-        // Export (uses current filtered sales)
+        // Export
         function getTableData() { return allSales.map(s=>({"Customer":`${s.customer_title} ${s.customer_name}`,"Phone":s.customer_phone,"Location":s.customer_location,"Service":s.service,"Date":s.service_date,"Status":s.report_status,"Amount ($)":s.amount,"Area Type":s.area_type,"Area Size":s.area_size})); }
         document.getElementById('exportCSVBtn')?.addEventListener('click',()=>{const data=getTableData(); const headers=Object.keys(data[0]); const csvRows=[headers.join(',')]; for(const row of data){ const values=headers.map(header=>`"${row[header]}"`); csvRows.push(values.join(',')); } const blob=new Blob([csvRows.join('\n')],{type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`verdisol_sales_${new Date().toISOString().slice(0,19)}.csv`; a.click(); URL.revokeObjectURL(url); });
         document.getElementById('exportExcelBtn')?.addEventListener('click',()=>{const data=getTableData(); const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"SalesRecords"); XLSX.writeFile(wb,`verdisol_sales_${new Date().toISOString().slice(0,19)}.xlsx`); });
@@ -793,15 +685,16 @@
         fixPeriodButtons();
         const analyticsNav=document.querySelector('.nav-item[data-view="analytics"]'); if(analyticsNav) analyticsNav.addEventListener('click',()=>setTimeout(fixPeriodButtons,100));
         
-        // Completed sales loader
+        // Completed sales load button
         const completedYearSelect = document.getElementById('completedYearSelect');
         if(completedYearSelect) {
             document.getElementById('loadCompletedSalesBtn')?.addEventListener('click', async () => {
-                const year = completedYearSelect.value, month = document.getElementById('completedMonthSelect').value;
+                const year = completedYearSelect.value;
+                const month = document.getElementById('completedMonthSelect').value;
                 const res = await fetch(`/api/completed_sales_by_month?year=${year}&month=${month}`);
                 const data = await res.json();
                 if(data.error) { document.getElementById('completedMonthSummary').innerHTML = `<span class="text-red-300">${data.error}</span>`; return; }
-                document.getElementById('completedMonthSummary').innerHTML = `<strong>${data.month}/${data.year}</strong><br>Total Sales: $${data.total.toLocaleString()}<br>Number of Orders: ${data.count}`;
+                document.getElementById('completedMonthSummary').innerHTML = `<strong>${month}/${year}</strong><br>Total Sales: $${data.total.toLocaleString()}<br>Number of Orders: ${data.count}`;
                 if(completedPieChart) completedPieChart.destroy();
                 completedPieChart = new Chart(document.getElementById('completedPieChart'), { type: 'pie', data: { labels: [`Completed (${month}/${year})`], datasets: [{ data: [data.total], backgroundColor: ['#10b981'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } } });
             });
